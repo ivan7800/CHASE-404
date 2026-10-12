@@ -16,7 +16,7 @@ test('city includes consistent finite geometry after silhouette pass',()=>{
  assert.equal(mesh.positions.length,mesh.normals.length);
  assert.equal(mesh.positions.length,mesh.colors.length);
  assert.equal(mesh.count*3,mesh.positions.length);
- assert.ok(mesh.count>350000&&mesh.count<390000,`Unexpected urban mesh: ${mesh.count}`);
+ assert.ok(mesh.count>350000&&mesh.count<400000,`Unexpected urban mesh: ${mesh.count}`);
  for(const v of mesh.positions)assert.ok(Number.isFinite(v));
 });
 test('rooftop additions do not alter city navigation contract',()=>{

@@ -1,6 +1,6 @@
 # CHASE 404 — Barcelona 1984
 
-**Versión 0.14.7 ALPHA · Correcciones de progresión y preparación de ZIP para GitHub.** Conserva los detalles visuales de la fase 11.22 y corrige el reinicio durante misiones o encargos. La calidad visual y los FPS siguen pendientes de pruebas reales.
+**Versión 0.15.0 ALPHA · Primera pasada visual de El Carmel.** Añade relieve y variedad a ocho fachadas residenciales y tres pequeños comercios ficticios de 1984. Conserva las correcciones de campaña de v0.14.7. La revisión visual en WebGL y los FPS siguen pendientes de prueba manual.
 
 Videojuego original de conducción arcade ambientado en una Barcelona ficticia y condensada de 1984. Incluye 15 misiones principales, dos desenlaces, tres encargos secundarios, exploración libre, seis modelos de coches, taller, garaje, secretos y personajes con historias secundarias. Se ejecuta en el navegador con WebGL y archivos locales; no requiere cuenta, servidor remoto ni servicios externos.
 
@@ -40,6 +40,8 @@ Consulta **[PUBLISH_GITHUB_PAGES.md](PUBLISH_GITHUB_PAGES.md)**. La publicación
 Los ajustes y avances se almacenan en `localStorage` del navegador. Borrar datos del sitio puede eliminar el progreso. No hay sincronización en la nube. El juego usa representaciones ficticias de vehículos, lugares y personajes; no es una reconstrucción histórica exacta.
 
 ## Verificación y estado
+
+La fase visual 11.23 se documenta en [docs/FASE_11_23_EL_CARMEL.md](docs/FASE_11_23_EL_CARMEL.md) y sus límites de prueba en [QA_v0.15.0.md](QA_v0.15.0.md). El arte nuevo aún requiere revisión en navegador con WebGL.
 
 - `npm run audit`: sintaxis, tests, assets, conexiones estáticas de UI y puerta de distribución.
 - `npm run release:gate`: presencia de recursos, consistencia de versión y archivos de publicación.

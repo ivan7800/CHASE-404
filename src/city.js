@@ -977,6 +977,88 @@ function buildStreetLevelArt1122(g){
  }
 }
 
+// Fase 11.23 — ocho fachadas piloto de El Carmel, con identidad de barrio.
+// El conjunto es geometría estática de bajo coste; no toca calzada ni colisiones.
+export const CARMEL_VISUAL_PASS_1123=Object.freeze({houses:8,shopSigns:3,street:'El Carmel · 1984'});
+const SHOP_GLYPHS_1123=Object.freeze({
+ A:['010','101','111','101','101'],B:['110','101','110','101','110'],E:['111','100','110','100','111'],
+ I:['111','010','010','010','111'],L:['100','100','100','100','111'],Q:['010','101','101','111','011'],
+ R:['110','101','110','101','101'],S:['011','100','010','001','110'],T:['111','010','010','010','010'],U:['101','101','101','101','111']
+});
+function pixelShopName1123(g,label,x,y,z,pixel,color){
+ let cursor=x;
+ for(const letter of label){
+  const glyph=SHOP_GLYPHS_1123[letter];if(!glyph){cursor+=pixel*4;continue;}
+  for(let row=0;row<glyph.length;row++)for(let col=0;col<glyph[row].length;col++)if(glyph[row][col]==='1')
+   g.box(cursor+col*pixel,y+(glyph.length-1-row)*pixel,z,pixel*.76,pixel*.76,.10,color);
+  cursor+=pixel*4;
+ }
+}
+function buildCarmelVisualPass1123(g){
+ const homes=[[-110,-225,11,10,6],[-84,-225,13,10,7.2],[-58,-225,15,10,8.4],[-110,229,11,10,6],[-83,229,13,10,7.2],[72,216,15,10,8.4],[104,216,11,10,6],[210,185,15,10,8.4]];
+ const plaster=[[189,160,128],[163,174,158],[198,180,145],[176,157,139]],stone=[119,106,91],iron=[61,69,67];
+ homes.forEach(([x,z,w,d,h],i)=>{
+  const y=cityElevation(x,z),front=z+d/2+.14,wall=plaster[i%plaster.length];
+  // A distinct two-tone street-facing elevation breaks the repeated plain cube.
+  g.box(x,y+.62,front+.05,w-.34,1.12,.16,i%3===0?[133,81,62]:stone);
+  g.box(x,y+h*.48,front+.02,w-.7,.16,.20,[211,196,164]);
+  for(const side of [-1,1]){
+   g.box(x+side*(w/2-.32),y+h*.49,front+.08,.40,h-.65,.24,wall.map(v=>Math.max(0,v-24)));
+   g.box(x+side*(w/2-.48),y+h+.08,z,.22,.55,d+.34,iron);
+  }
+  // Deep window reveals, stone sills and shutter leaves sized for a hillside home.
+  for(const [windowIndex,dx] of [-1,1].entries()){
+   const wx=x+dx*w*.23,wy=y+3.22,ww=1.74;
+   g.box(wx,wy,front+.12,ww,1.72,.12,[49,70,76]);
+   g.box(wx,wy,front+.22,.12,1.84,.20,[205,190,157]);
+   for(const side of [-1,1]){
+    g.box(wx+side*(ww/2+.16),wy,front+.30,.28,1.62,.28,[112,91,68]);
+   }
+   g.box(wx,wy-.96,front+.29,ww+.72,.18,.48,[213,197,165]);
+   // Half-height flower railings alternate with a compact projecting balcony.
+   if((i+windowIndex)%2===0){
+    const by=wy-1.02;
+    g.box(wx,by+.53,front+.82,ww+1.0,.10,.10,iron);
+    for(let post=0;post<6;post++)g.box(wx-(ww+.72)/2+post*(ww+.72)/5,by+.27,front+.82,.055,.52,.055,iron);
+    g.box(wx,by+.08,front+.87,1.18,.27,.42,[143,86,61]);
+    g.cylinder(wx-.30,by+.22,front+.88,.19,.36,5,[75,105,67]);
+    g.cylinder(wx+.25,by+.22,front+.88,.19,.36,5,[83,116,72]);
+   }
+  }
+  // Simple panelled entrance and meter cabinet, both attached to the facade.
+  const doorX=x+(i%2?-.23:.23)*w,doorY=y+1.65;
+  g.box(doorX,doorY,front+.15,1.30,3.30,.18,[61,75,73]);
+  g.box(doorX,doorY,front+.27,1.02,2.98,.08,i%2?[115,78,53]:[91,102,83]);
+  g.box(doorX+.31,doorY,front+.33,.055,2.62,.06,[194,168,123]);
+  g.box(x+w*.39,y+1.12,front+.23,.48,.86,.32,[104,116,108]);
+  // Low parapet and roof service pieces define the silhouette from the road below.
+  g.box(x,y+h+.39,z,w+.38,.25,d+.36,[123,108,90]);
+  g.box(x+w*.28,y+h+1.12,z-d*.15,1.24,1.18,1.05,[104,112,105]);
+  if(i%2===0){
+   g.box(x-w*.25,y+h+1.46,z-d*.19,.12,3.1,.12,iron);
+   g.box(x-w*.25,y+h+2.72,z-d*.19,2.1,.10,.12,iron);
+   g.box(x-w*.25,y+h+1.95,z-d*.19,1.25,.10,.12,iron);
+  }
+  // Three small storefronts establish a readable human scale and 1984 street life.
+  if(i===0||i===4||i===7){
+   const name=i===0?'BAR':i===4?'TALLER':'QUEVIURES';
+   const signW=name.length*4*.17+.55,signX=x-signW/2,signY=y+4.63;
+   g.box(x,signY,front+.35,signW,.94,.20,[56,63,61]);
+   g.box(x,signY,front+.48,signW-.16,.72,.08,i===4?[145,91,58]:[113,82,59]);
+   pixelShopName1123(g,name,signX+.30,signY-.27,front+.55,.17,[238,215,168]);
+   for(let stripe=0;stripe<6;stripe++)g.box(x-signW*.42+stripe*signW*.168,y+3.85,front+.86,signW*.164,.14,1.03,stripe%2?[198,177,135]:[104,122,101]);
+   g.box(x,y+3.48,front+1.34,signW*.84,.35,.12,[88,76,62]);
+  }
+  // Narrow downpipe and two clothesline panels; a little irregularity humanizes the block.
+  g.box(x-w*.41,y+h*.45,front+.12,.11,h*.76,.12,[93,103,94]);
+  if(i===2||i===6){
+   g.box(x+.1,y+5.1,front+1.68,2.8,.055,.055,[90,89,79]);
+   g.box(x-.55,y+4.58,front+1.73,.82,1.02,.08,[190,177,147]);
+   g.box(x+.52,y+4.72,front+1.73,.86,.76,.08,[119,145,151]);
+  }
+ });
+}
+
 export function buildCity(){
- const g=new Builder();buildHillside(g);buildStreets(g);buildRoadFinishes(g);buildHousing(g);buildNeighborhoodDetails(g);buildCarmelWorkshop(g);buildVerenneGarage(g);buildPeriodStreetscape(g);buildViewpoint(g);buildGuinardoGateway(g);buildGraciaGateway(g);buildEixampleGateway(g);buildPortGateway(g);buildMontjuicGateway(g);buildFacadeFinishes(g);buildCarmelGraciaArtPass(g);buildStreetArt113(g);buildAmbient114(g);buildArchitecturalPass117(g);buildFacadeMaterials118(g);buildRooftopSilhouettes1119(g);buildCarmelPanorama1120(g);buildDistrictIdentity1121(g);buildStreetLevelArt1122(g);buildStreetDetails119(g);buildSecretMarkers(g);buildContactFigures(g);return g.finish();
+ const g=new Builder();buildHillside(g);buildStreets(g);buildRoadFinishes(g);buildHousing(g);buildNeighborhoodDetails(g);buildCarmelWorkshop(g);buildVerenneGarage(g);buildPeriodStreetscape(g);buildViewpoint(g);buildGuinardoGateway(g);buildGraciaGateway(g);buildEixampleGateway(g);buildPortGateway(g);buildMontjuicGateway(g);buildFacadeFinishes(g);buildCarmelGraciaArtPass(g);buildStreetArt113(g);buildAmbient114(g);buildArchitecturalPass117(g);buildFacadeMaterials118(g);buildRooftopSilhouettes1119(g);buildCarmelPanorama1120(g);buildDistrictIdentity1121(g);buildStreetLevelArt1122(g);buildCarmelVisualPass1123(g);buildStreetDetails119(g);buildSecretMarkers(g);buildContactFigures(g);return g.finish();
 }

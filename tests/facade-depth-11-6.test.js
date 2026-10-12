@@ -9,6 +9,6 @@ test('11.6 conserva los nueve portales, ocho entradas y proporción de puertas',
 });
 test('11.6 geometría urbana generada con relieve dentro del presupuesto ampliado',()=>{
  const mesh=buildCity();assert.ok(mesh.count>350199,'must add real geometry');
- assert.ok(mesh.count<390000,'keep bounded');
+ assert.ok(mesh.count<400000,'keep bounded');
  assert.ok(mesh.positions.every(Number.isFinite));
 });

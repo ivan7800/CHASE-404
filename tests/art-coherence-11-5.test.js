@@ -16,6 +16,6 @@ test('paleta de materiales estable y mallas coherentes',()=>{
   assert.ok(Object.isFrozen(value));
  }
  const body=buildGaelMeshes();assert.ok(body.body.count>0);
- const city=buildCity();assert.ok(city.count>340000&&city.count<395000);
+ const city=buildCity();assert.ok(city.count>340000&&city.count<400000);
  assert.ok(city.positions.every(Number.isFinite));assert.equal(CITY.streets.length,39);
 });

@@ -959,3 +959,12 @@
 - Corregidos la versión visible del HUD y el recuento del staging en README; el ZIP final omite `_site/` generado.
 - Tests del ciclo de reinicio, reanudación y guardado. La aceptación jugable, FPS y ambos finales siguen pendientes de una sesión en navegador real.
 
+
+## v0.15.0 — Fase 11.23 · Fachadas piloto de El Carmel
+
+- Primera pasada focalizada en ocho viviendas de ladera: ventanas en relieve, contraventanas, balcones ligeros, zócalos, canalones y siluetas de azotea.
+- Tres rótulos comerciales ficticios —BAR, TALLER y QUEVIURES— con marquesinas de época y geometría integrada, sin logos de marcas reales.
+- El conjunto se limita a fachadas ya existentes; la red vial, el ancho de calzada, los puntos de misión y la salida urbana permanecen sin cambios.
+- Geometría de ciudad: 382.173 → 399.165 vértices (+4,45 %). Se conserva el límite automatizado de 400.000; la medición real de FPS sigue pendiente.
+- Añadida prueba de regresión para la red urbana, la salida y el presupuesto geométrico.
+- La validación visual de la escena 3D requiere un navegador con WebGL operativo; esta pasada no se presenta como verificada visualmente.

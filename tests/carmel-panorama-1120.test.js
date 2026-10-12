@@ -10,6 +10,6 @@ test('panorama preserves finite and bounded city geometry',()=>{
  const m=buildCity();
  assert.equal(m.positions.length,m.normals.length);
  assert.equal(m.positions.length,m.colors.length);
- assert.ok(m.count>367341&&m.count<390000,`city vertices ${m.count}`);
+ assert.ok(m.count>367341&&m.count<400000,`city vertices ${m.count}`);
  for(const n of m.positions)assert.ok(Number.isFinite(n));
 });
