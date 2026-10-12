@@ -1,0 +1,1366 @@
+
+> chase-404@0.8.6 audit
+> npm run check && npm test && npm run assets:validate && node tools/audit_project.mjs
+
+
+> chase-404@0.8.6 check
+> node --check src/mission.js && node --check src/city.js && node --check src/controls.js && node --check src/settings.js && node --check src/track.js && node --check src/garage.js && node --check src/physics.js && node --check src/geometry.js && node --check src/glb.js && node --check src/renderer.js && node --check src/audio.js && node --check src/vfx.js && node --check src/race.js && node --check src/progression.js && node --check src/main.js && node --check tools/build_fleet_glb.mjs && node --check tools/validate_assets.mjs && node --check src/hero-car.js && node --check src/traffic.js && node --check src/police.js && node --check src/road-network.js && node --check src/urban-collisions.js && node --check src/damage.js && node --check src/on-foot.js && node --check src/signals.js && node --check src/suspect.js && node --check src/campaign-choice.js && node --check src/final-choice.js && node --check src/side-activities.js && node --check src/workshop.js && node --check src/vehicle-collection.js && node --check src/discoveries.js && node --check src/contacts.js
+
+
+> chase-404@0.8.6 test
+> node --test tests/*.test.js
+
+TAP version 13
+# Subtest: mission eight is available and branches remain on roads
+ok 1 - mission eight is available and branches remain on roads
+  ---
+  duration_ms: 1.528114
+  type: 'test'
+  ...
+# Subtest: west escape route can finish only with safe distance
+ok 2 - west escape route can finish only with safe distance
+  ---
+  duration_ms: 0.804707
+  type: 'test'
+  ...
+# Subtest: east route available and patrol proximity resets escape
+ok 3 - east route available and patrol proximity resets escape
+  ---
+  duration_ms: 0.247061
+  type: 'test'
+  ...
+# Subtest: ambush times out
+ok 4 - ambush times out
+  ---
+  duration_ms: 0.328528
+  type: 'test'
+  ...
+# Subtest: audio is opt-in and creates no nodes before activation
+ok 5 - audio is opt-in and creates no nodes before activation
+  ---
+  duration_ms: 6.413618
+  type: 'test'
+  ...
+# Subtest: audio disables gracefully without browser audio API
+ok 6 - audio disables gracefully without browser audio API
+  ---
+  duration_ms: 0.775217
+  type: 'test'
+  ...
+# Subtest: west route changes the second chapter 9 objective and can be completed
+ok 7 - west route changes the second chapter 9 objective and can be completed
+  ---
+  duration_ms: 1.661354
+  type: 'test'
+  ...
+# Subtest: service route leads to a different second objective
+ok 8 - service route leads to a different second objective
+  ---
+  duration_ms: 0.412692
+  type: 'test'
+  ...
+# Subtest: invalid or unavailable stored choice falls back safely
+ok 9 - invalid or unavailable stored choice falls back safely
+  ---
+  duration_ms: 0.770752
+  type: 'test'
+  ...
+# Subtest: choice persists with a versioned record
+ok 10 - choice persists with a versioned record
+  ---
+  duration_ms: 0.311633
+  type: 'test'
+  ...
+# Subtest: failed storage operations do not crash campaign
+ok 11 - failed storage operations do not crash campaign
+  ---
+  duration_ms: 0.249186
+  type: 'test'
+  ...
+# Subtest: El Carmel 1984 terrain and district mesh are finite
+ok 12 - El Carmel 1984 terrain and district mesh are finite
+  ---
+  duration_ms: 351.083934
+  type: 'test'
+  ...
+# Subtest: winding neighborhood roads include connected junctions and a valid spawn
+ok 13 - winding neighborhood roads include connected junctions and a valid spawn
+  ---
+  duration_ms: 0.413309
+  type: 'test'
+  ...
+# Subtest: urban handling climbs the Carmel streets without lap projection
+ok 14 - urban handling climbs the Carmel streets without lap projection
+  ---
+  duration_ms: 6.732654
+  type: 'test'
+  ...
+# Subtest: building edges correct the car to the nearest street
+ok 15 - building edges correct the car to the nearest street
+  ---
+  duration_ms: 1.611536
+  type: 'test'
+  ...
+# Subtest: chapter 10 is a separate three-stage encounter
+ok 16 - chapter 10 is a separate three-stage encounter
+  ---
+  duration_ms: 1.092388
+  type: 'test'
+  ...
+# Subtest: contact requires Gael to leave the vehicle
+ok 17 - contact requires Gael to leave the vehicle
+  ---
+  duration_ms: 0.64797
+  type: 'test'
+  ...
+# Subtest: contact requires uninterrupted conversation near Clara
+ok 18 - contact requires uninterrupted conversation near Clara
+  ---
+  duration_ms: 1.412703
+  type: 'test'
+  ...
+# Subtest: chapter 10 can be completed after contacting Clara
+ok 19 - chapter 10 can be completed after contacting Clara
+  ---
+  duration_ms: 0.398215
+  type: 'test'
+  ...
+# Subtest: tres contactos originales, con pista separada del personaje y conectados a calles
+ok 20 - tres contactos originales, con pista separada del personaje y conectados a calles
+  ---
+  duration_ms: 254.586512
+  type: 'test'
+  ...
+# Subtest: encargo de Manel completo: aceptar, buscar prueba y elegir entregar
+ok 21 - encargo de Manel completo: aceptar, buscar prueba y elegir entregar
+  ---
+  duration_ms: 2.155266
+  type: 'test'
+  ...
+# Subtest: ambas decisiones generan consecuencias y premios distintos sin alterar campaña
+ok 22 - ambas decisiones generan consecuencias y premios distintos sin alterar campaña
+  ---
+  duration_ms: 1.112439
+  type: 'test'
+  ...
+# Subtest: se requieren estado y localización correctos en cada etapa
+ok 23 - se requieren estado y localización correctos en cada etapa
+  ---
+  duration_ms: 0.864513
+  type: 'test'
+  ...
+# Subtest: no se permite hablar desde el coche, desde lejos ni con persecución
+ok 24 - no se permite hablar desde el coche, desde lejos ni con persecución
+  ---
+  duration_ms: 0.937114
+  type: 'test'
+  ...
+# Subtest: sanitización: solo IDs y etapas válidos, sin contaminación de prototipos
+ok 25 - sanitización: solo IDs y etapas válidos, sin contaminación de prototipos
+  ---
+  duration_ms: 1.452027
+  type: 'test'
+  ...
+# Subtest: tres historias independientes, progreso 3/3 y persistencia sin perder récords
+ok 26 - tres historias independientes, progreso 3/3 y persistencia sin perder récords
+  ---
+  duration_ms: 1.279677
+  type: 'test'
+  ...
+# Subtest: guardado bloqueado no cobra ni marca misiones como terminadas
+ok 27 - guardado bloqueado no cobra ni marca misiones como terminadas
+  ---
+  duration_ms: 0.574638
+  type: 'test'
+  ...
+# Subtest: taller y hallazgos mantienen la progresión de contactos
+ok 28 - taller y hallazgos mantienen la progresión de contactos
+  ---
+  duration_ms: 1.740278
+  type: 'test'
+  ...
+# Subtest: UI: controles, diálogos y pistas vinculados; sin IDs duplicados
+ok 29 - UI: controles, diálogos y pistas vinculados; sin IDs duplicados
+  ---
+  duration_ms: 2.360921
+  type: 'test'
+  ...
+# Subtest: three original circuits are continuous, project correctly and differ in geometry
+ok 30 - three original circuits are continuous, project correctly and differ in geometry
+  ---
+  duration_ms: 580.284339
+  type: 'test'
+  ...
+# Subtest: every circuit can count three checkpoint-validated laps with a finish
+ok 31 - every circuit can count three checkpoint-validated laps with a finish
+  ---
+  duration_ms: 391.938596
+  type: 'test'
+  ...
+# Subtest: six cars have unique names, legitimate tuning and distinct body geometry
+ok 32 - six cars have unique names, legitimate tuning and distinct body geometry
+  ---
+  duration_ms: 15.429391
+  type: 'test'
+  ...
+# Subtest: handling and power tuning change actual forward acceleration
+ok 33 - handling and power tuning change actual forward acceleration
+  ---
+  duration_ms: 9.020349
+  type: 'test'
+  ...
+# Subtest: unknown track IDs fail without altering the selected scene
+ok 34 - unknown track IDs fail without altering the selected scene
+  ---
+  duration_ms: 245.790605
+  type: 'test'
+  ...
+# Subtest: key state supports WASD and arrow keys simultaneously without prematurely releasing throttle
+ok 35 - key state supports WASD and arrow keys simultaneously without prematurely releasing throttle
+  ---
+  duration_ms: 2.296804
+  type: 'test'
+  ...
+# Subtest: touch and keyboard can hold the same action independently
+ok 36 - touch and keyboard can hold the same action independently
+  ---
+  duration_ms: 0.268518
+  type: 'test'
+  ...
+# Subtest: clearing focus stops keys and pointers, even before keyup
+ok 37 - clearing focus stops keys and pointers, even before keyup
+  ---
+  duration_ms: 1.30111
+  type: 'test'
+  ...
+# Subtest: remapping is resolved at snapshot time and unknown keys ignored
+ok 38 - remapping is resolved at snapshot time and unknown keys ignored
+  ---
+  duration_ms: 0.313588
+  type: 'test'
+  ...
+# Subtest: concurrent opposite steering keys remain independent
+ok 39 - concurrent opposite steering keys remain independent
+  ---
+  duration_ms: 0.343681
+  type: 'test'
+  ...
+# Subtest: urban cars start undamaged; reset creates repaired car
+ok 40 - urban cars start undamaged; reset creates repaired car
+  ---
+  duration_ms: 2.020407
+  type: 'test'
+  ...
+# Subtest: impact cooldown prevents repetitive damage
+ok 41 - impact cooldown prevents repetitive damage
+  ---
+  duration_ms: 0.299504
+  type: 'test'
+  ...
+# Subtest: invalid or low speed impacts do not damage
+ok 42 - invalid or low speed impacts do not damage
+  ---
+  duration_ms: 0.179834
+  type: 'test'
+  ...
+# Subtest: damage is bounded and weakens propulsion without affecting circuits
+ok 43 - damage is bounded and weakens propulsion without affecting circuits
+  ---
+  duration_ms: 4.376382
+  type: 'test'
+  ...
+# Subtest: damaged urban cars have reduced acceleration
+ok 44 - damaged urban cars have reduced acceleration
+  ---
+  duration_ms: 13.811597
+  type: 'test'
+  ...
+# Subtest: ocho hallazgos con identificadores, relato y regiones propios, accesibles desde una calle
+ok 45 - ocho hallazgos con identificadores, relato y regiones propios, accesibles desde una calle
+  ---
+  duration_ms: 314.673617
+  type: 'test'
+  ...
+# Subtest: cobro único, estado persistente y bonificación por completar el archivo
+ok 46 - cobro único, estado persistente y bonificación por completar el archivo
+  ---
+  duration_ms: 1.840054
+  type: 'test'
+  ...
+# Subtest: interacción solo andando, muy cerca y fuera de persecución
+ok 47 - interacción solo andando, muy cerca y fuera de persecución
+  ---
+  duration_ms: 0.622588
+  type: 'test'
+  ...
+# Subtest: saneamiento de datos y compatibilidad con partida anterior
+ok 48 - saneamiento de datos y compatibilidad con partida anterior
+  ---
+  duration_ms: 0.685089
+  type: 'test'
+  ...
+# Subtest: persistencia atómica: guardado rechazado no modifica saldo ni descubrimientos
+ok 49 - persistencia atómica: guardado rechazado no modifica saldo ni descubrimientos
+  ---
+  duration_ms: 6.279446
+  type: 'test'
+  ...
+# Subtest: taller y encargos preservan los hallazgos al modificar el mismo saldo
+ok 50 - taller y encargos preservan los hallazgos al modificar el mismo saldo
+  ---
+  duration_ms: 2.448331
+  type: 'test'
+  ...
+# Subtest: UI estática: referencias a IDs existentes sin duplicados
+ok 51 - UI estática: referencias a IDs existentes sin duplicados
+  ---
+  duration_ms: 4.626744
+  type: 'test'
+  ...
+# Subtest: selector, archivo, E táctil y marcador contextual tienen controles conectados
+ok 52 - selector, archivo, E táctil y marcador contextual tienen controles conectados
+  ---
+  duration_ms: 0.703718
+  type: 'test'
+  ...
+# Subtest: la exploración libre no avanza el temporizador ni activa una misión
+ok 53 - la exploración libre no avanza el temporizador ni activa una misión
+  ---
+  duration_ms: 0.247036
+  type: 'test'
+  ...
+# Subtest: Eixample conectado por avenidas a Gràcia
+ok 54 - Eixample conectado por avenidas a Gràcia
+  ---
+  duration_ms: 3.164006
+  type: 'test'
+  ...
+# Subtest: La misión 03 tiene destinos ordenados y victoria al tercero
+ok 55 - La misión 03 tiene destinos ordenados y victoria al tercero
+  ---
+  duration_ms: 0.720102
+  type: 'test'
+  ...
+# Subtest: La misión 03 pierde al superar el límite
+ok 56 - La misión 03 pierde al superar el límite
+  ---
+  duration_ms: 0.262918
+  type: 'test'
+  ...
+# Subtest: Los edificios del Eixample y sus coordenadas son finitos
+ok 57 - Los edificios del Eixample y sus coordenadas son finitos
+  ---
+  duration_ms: 321.821921
+  type: 'test'
+  ...
+# Subtest: mission 15 has complete RESCATAR A MI HERMANO ending
+ok 58 - mission 15 has complete RESCATAR A MI HERMANO ending
+  ---
+  duration_ms: 1.507229
+  type: 'test'
+  ...
+# Subtest: mission 15 has complete RECUPERAR LAS PRUEBAS ending
+ok 59 - mission 15 has complete RECUPERAR LAS PRUEBAS ending
+  ---
+  duration_ms: 0.216438
+  type: 'test'
+  ...
+# Subtest: invalid final-choice save is safely rejected and fallback is deterministic
+ok 60 - invalid final-choice save is safely rejected and fallback is deterministic
+  ---
+  duration_ms: 0.320652
+  type: 'test'
+  ...
+# Subtest: mission 15 times out correctly
+ok 61 - mission 15 times out correctly
+  ---
+  duration_ms: 0.1261
+  type: 'test'
+  ...
+# Subtest: mission 14 follows 13 and introduces an explicit choice
+ok 62 - mission 14 follows 13 and introduces an explicit choice
+  ---
+  duration_ms: 0.710594
+  type: 'test'
+  ...
+# Subtest: rescue choice produces a distinct final objective and win
+ok 63 - rescue choice produces a distinct final objective and win
+  ---
+  duration_ms: 0.576041
+  type: 'test'
+  ...
+# Subtest: evidence choice produces a distinct final objective and win
+ok 64 - evidence choice produces a distinct final objective and win
+  ---
+  duration_ms: 0.343465
+  type: 'test'
+  ...
+# Subtest: final choice persists with validation and corrupt data falls back
+ok 65 - final choice persists with validation and corrupt data falls back
+  ---
+  duration_ms: 0.411757
+  type: 'test'
+  ...
+# Subtest: mission 14 times out when Gael does not arrive
+ok 66 - mission 14 times out when Gael does not arrive
+  ---
+  duration_ms: 0.142205
+  type: 'test'
+  ...
+# Subtest: geometry buffers contain finite vertices and normals
+ok 67 - geometry buffers contain finite vertices and normals
+  ---
+  duration_ms: 492.858262
+  type: 'test'
+  ...
+# Subtest: local GLB has valid geometry and paint color
+ok 68 - local GLB has valid geometry and paint color
+  ---
+  duration_ms: 30.512923
+  type: 'test'
+  ...
+# Subtest: GLB loader refuses invalid files
+ok 69 - GLB loader refuses invalid files
+  ---
+  duration_ms: 4.72803
+  type: 'test'
+  ...
+# Subtest: La conexión a Gràcia mantiene una ruta circulable desde el Carmel
+ok 70 - La conexión a Gràcia mantiene una ruta circulable desde el Carmel
+  ---
+  duration_ms: 1.917101
+  type: 'test'
+  ...
+# Subtest: La misión 02 es jugable en orden y respeta su propio límite
+ok 71 - La misión 02 es jugable en orden y respeta su propio límite
+  ---
+  duration_ms: 0.54189
+  type: 'test'
+  ...
+# Subtest: La ciudad de Gràcia se integra en geometría y límites
+ok 72 - La ciudad de Gràcia se integra en geometría y límites
+  ---
+  duration_ms: 284.313245
+  type: 'test'
+  ...
+# Subtest: El Guinardó está conectado físicamente al Carmel
+ok 73 - El Guinardó está conectado físicamente al Carmel
+  ---
+  duration_ms: 3.080663
+  type: 'test'
+  ...
+# Subtest: Las calles nuevas se mantienen dentro del terreno
+ok 74 - Las calles nuevas se mantienen dentro del terreno
+  ---
+  duration_ms: 0.691613
+  type: 'test'
+  ...
+# Subtest: La malla ampliada se genera con geometría válida
+ok 75 - La malla ampliada se genera con geometría válida
+  ---
+  duration_ms: 279.919987
+  type: 'test'
+  ...
+# Subtest: steering left/right at speed produces predictable opposite heading and road offsets
+ok 76 - steering left/right at speed produces predictable opposite heading and road offsets
+  ---
+  duration_ms: 30.326798
+  type: 'test'
+  ...
+# Subtest: default D binding reaches the visible right turn without being cancelled
+ok 77 - default D binding reaches the visible right turn without being cancelled
+  ---
+  duration_ms: 10.524112
+  type: 'test'
+  ...
+# Subtest: steering recenters when input released, yaw remains stable
+ok 78 - steering recenters when input released, yaw remains stable
+  ---
+  duration_ms: 8.365595
+  type: 'test'
+  ...
+# Subtest: handbrake produces larger slip yet remains finite
+ok 79 - handbrake produces larger slip yet remains finite
+  ---
+  duration_ms: 5.729982
+  type: 'test'
+  ...
+# Subtest: after hitting barrier speed and outward velocity are reduced and car can rejoin
+ok 80 - after hitting barrier speed and outward velocity are reduced and car can rejoin
+  ---
+  duration_ms: 1.028729
+  type: 'test'
+  ...
+# Subtest: projection hint stays accurate relative to global search on all circuits
+ok 81 - projection hint stays accurate relative to global search on all circuits
+  ---
+  duration_ms: 415.401788
+  type: 'test'
+  ...
+# Subtest: vehicle tuning survives reset
+ok 82 - vehicle tuning survives reset
+  ---
+  duration_ms: 0.479345
+  type: 'test'
+  ...
+# Subtest: brake takes priority if accelerator and brake are pressed together
+ok 83 - brake takes priority if accelerator and brake are pressed together
+  ---
+  duration_ms: 3.107791
+  type: 'test'
+  ...
+# Subtest: steering sensitivity changes yaw response predictably
+ok 84 - steering sensitivity changes yaw response predictably
+  ---
+  duration_ms: 5.734076
+  type: 'test'
+  ...
+# Subtest: Verenne V8 has substantial detailed geometry, with valid color buffers
+ok 85 - Verenne V8 has substantial detailed geometry, with valid color buffers
+  ---
+  duration_ms: 1.314127
+  type: 'test'
+  ...
+# Subtest: Verenne V8 stays within chase-game body proportions
+ok 86 - Verenne V8 stays within chase-game body proportions
+  ---
+  duration_ms: 2.618908
+  type: 'test'
+  ...
+# Subtest: Remastered BLAZE GLB decodes through exact engine importer
+ok 87 - Remastered BLAZE GLB decodes through exact engine importer
+  ---
+  duration_ms: 13.061662
+  type: 'test'
+  ...
+# Subtest: regresión de las 15 misiones · servicio · rescate
+ok 88 - regresión de las 15 misiones · servicio · rescate
+  ---
+  duration_ms: 2.841145
+  type: 'test'
+  ...
+# Subtest: regresión de las 15 misiones · servicio · pruebas
+ok 89 - regresión de las 15 misiones · servicio · pruebas
+  ---
+  duration_ms: 0.491994
+  type: 'test'
+  ...
+# Subtest: regresión de las 15 misiones · oeste · rescate
+ok 90 - regresión de las 15 misiones · oeste · rescate
+  ---
+  duration_ms: 0.238816
+  type: 'test'
+  ...
+# Subtest: regresión de las 15 misiones · oeste · pruebas
+ok 91 - regresión de las 15 misiones · oeste · pruebas
+  ---
+  duration_ms: 0.416855
+  type: 'test'
+  ...
+# Subtest: economía transversal: desafíos → mejoras → pistas → contactos → guardado
+ok 92 - economía transversal: desafíos → mejoras → pistas → contactos → guardado
+  ---
+  duration_ms: 6.259825
+  type: 'test'
+  ...
+# Subtest: intercambios de garaje conservan daños y no modifican decisiones ni saldo
+ok 93 - intercambios de garaje conservan daños y no modifican decisiones ni saldo
+  ---
+  duration_ms: 2.548139
+  type: 'test'
+  ...
+# Subtest: perfiles antiguos con teclas de interacción se reparan sin inutilizar los atajos
+ok 94 - perfiles antiguos con teclas de interacción se reparan sin inutilizar los atajos
+  ---
+  duration_ms: 0.877517
+  type: 'test'
+  ...
+# Subtest: guardado rechazado no altera economía, colección ni decisiones existentes
+ok 95 - guardado rechazado no altera economía, colección ni decisiones existentes
+  ---
+  duration_ms: 0.797703
+  type: 'test'
+  ...
+# Subtest: chapter 12 defines witness, archive and port stages
+ok 96 - chapter 12 defines witness, archive and port stages
+  ---
+  duration_ms: 0.730507
+  type: 'test'
+  ...
+# Subtest: archive investigation needs Gael on foot for full duration
+ok 97 - archive investigation needs Gael on foot for full duration
+  ---
+  duration_ms: 0.589466
+  type: 'test'
+  ...
+# Subtest: chapter 12 can be completed and times out
+ok 98 - chapter 12 can be completed and times out
+  ---
+  duration_ms: 1.764901
+  type: 'test'
+  ...
+# Subtest: mission starts in ready state and activates explicitly
+ok 99 - mission starts in ready state and activates explicitly
+  ---
+  duration_ms: 1.926626
+  type: 'test'
+  ...
+# Subtest: ordered checkpoints unlock next goal and victory
+ok 100 - ordered checkpoints unlock next goal and victory
+  ---
+  duration_ms: 0.282537
+  type: 'test'
+  ...
+# Subtest: timer expires and freezes after loss
+ok 101 - timer expires and freezes after loss
+  ---
+  duration_ms: 1.500968
+  type: 'test'
+  ...
+# Subtest: fresh mission is independent and starts with full time
+ok 102 - fresh mission is independent and starts with full time
+  ---
+  duration_ms: 0.231601
+  type: 'test'
+  ...
+# Subtest: Montjuïc conectado al puerto mediante vías transitables
+ok 103 - Montjuïc conectado al puerto mediante vías transitables
+  ---
+  duration_ms: 2.117851
+  type: 'test'
+  ...
+# Subtest: Desnivel de montaña y geometría finita
+ok 104 - Desnivel de montaña y geometría finita
+  ---
+  duration_ms: 242.769511
+  type: 'test'
+  ...
+# Subtest: Misión 05 se completa en secuencia y desbloquea el siguiente paso narrativo
+ok 105 - Misión 05 se completa en secuencia y desbloquea el siguiente paso narrativo
+  ---
+  duration_ms: 0.70917
+  type: 'test'
+  ...
+# Subtest: Misión 05 expira y capítulos previos permanecen
+ok 106 - Misión 05 expira y capítulos previos permanecen
+  ---
+  duration_ms: 0.224378
+  type: 'test'
+  ...
+# Subtest: no se puede bajar de un vehículo en marcha
+ok 107 - no se puede bajar de un vehículo en marcha
+  ---
+  duration_ms: 1.696796
+  type: 'test'
+  ...
+# Subtest: Gael baja, camina y vuelve al vehículo
+ok 108 - Gael baja, camina y vuelve al vehículo
+  ---
+  duration_ms: 2.086587
+  type: 'test'
+  ...
+# Subtest: cambiar a un coche de tráfico parado retira ese vehículo
+ok 109 - cambiar a un coche de tráfico parado retira ese vehículo
+  ---
+  duration_ms: 0.936929
+  type: 'test'
+  ...
+# Subtest: no se permite entrar en coches que circulan
+ok 110 - no se permite entrar en coches que circulan
+  ---
+  duration_ms: 0.330646
+  type: 'test'
+  ...
+# Subtest: cambiar de coche aplica modelo, ficha técnica y daño nuevo
+ok 111 - cambiar de coche aplica modelo, ficha técnica y daño nuevo
+  ---
+  duration_ms: 0.55213
+  type: 'test'
+  ...
+# Subtest: los vehículos no identificados reciben ficha segura por defecto
+ok 112 - los vehículos no identificados reciben ficha segura por defecto
+  ---
+  duration_ms: 0.606101
+  type: 'test'
+  ...
+# Subtest: Gael utiliza la puerta alternativa si hay un coche bloqueando la salida habitual
+ok 113 - Gael utiliza la puerta alternativa si hay un coche bloqueando la salida habitual
+  ---
+  duration_ms: 0.467074
+  type: 'test'
+  ...
+# Subtest: no se permite bajar cuando ambas salidas están ocupadas
+ok 114 - no se permite bajar cuando ambas salidas están ocupadas
+  ---
+  duration_ms: 0.670339
+  type: 'test'
+  ...
+# Subtest: track loops continuously and normals are unit length
+ok 115 - track loops continuously and normals are unit length
+  ---
+  duration_ms: 2.14655
+  type: 'test'
+  ...
+# Subtest: center line position projects back to itself
+ok 116 - center line position projects back to itself
+  ---
+  duration_ms: 31.962389
+  type: 'test'
+  ...
+# Subtest: outward offset creates positive road distance
+ok 117 - outward offset creates positive road distance
+  ---
+  duration_ms: 0.225287
+  type: 'test'
+  ...
+# Subtest: car accelerates on asphalt to arcade speed
+ok 118 - car accelerates on asphalt to arcade speed
+  ---
+  duration_ms: 2.323743
+  type: 'test'
+  ...
+# Subtest: brakes slow vehicle, reverse is capped
+ok 119 - brakes slow vehicle, reverse is capped
+  ---
+  duration_ms: 4.600531
+  type: 'test'
+  ...
+# Subtest: barriers bound the vehicle and reduce speed
+ok 120 - barriers bound the vehicle and reduce speed
+  ---
+  duration_ms: 0.390203
+  type: 'test'
+  ...
+# Subtest: reset clears movement and returns to starting line
+ok 121 - reset clears movement and returns to starting line
+  ---
+  duration_ms: 1.02445
+  type: 'test'
+  ...
+# Subtest: time formatter is stable and invalid is signalled
+ok 122 - time formatter is stable and invalid is signalled
+  ---
+  duration_ms: 0.150181
+  type: 'test'
+  ...
+# Subtest: full ordered lap crosses sectors and records a valid time
+ok 123 - full ordered lap crosses sectors and records a valid time
+  ---
+  duration_ms: 9.064781
+  type: 'test'
+  ...
+# Subtest: jumping across sectors without gates does not count a valid lap
+ok 124 - jumping across sectors without gates does not count a valid lap
+  ---
+  duration_ms: 0.697538
+  type: 'test'
+  ...
+# Subtest: police activates after sustained dangerous driving
+ok 125 - police activates after sustained dangerous driving
+  ---
+  duration_ms: 3.919313
+  type: 'test'
+  ...
+# Subtest: police does not spawn for ordinary urban driving
+ok 126 - police does not spawn for ordinary urban driving
+  ---
+  duration_ms: 0.344588
+  type: 'test'
+  ...
+# Subtest: capture requires low speed and sustained proximity
+ok 127 - capture requires low speed and sustained proximity
+  ---
+  duration_ms: 15.095018
+  type: 'test'
+  ...
+# Subtest: Puerto conectado a las avenidas del Eixample
+ok 128 - Puerto conectado a las avenidas del Eixample
+  ---
+  duration_ms: 1.929629
+  type: 'test'
+  ...
+# Subtest: Misión 04 con tres puntos y desenlace
+ok 129 - Misión 04 con tres puntos y desenlace
+  ---
+  duration_ms: 0.559171
+  type: 'test'
+  ...
+# Subtest: Misión 04 expira al superar el tiempo
+ok 130 - Misión 04 expira al superar el tiempo
+  ---
+  duration_ms: 0.117129
+  type: 'test'
+  ...
+# Subtest: Geometría portuaria válida
+ok 131 - Geometría portuaria válida
+  ---
+  duration_ms: 279.658891
+  type: 'test'
+  ...
+# Subtest: four modes: rules for opponents, finite goals and unlimited free run
+ok 132 - four modes: rules for opponents, finite goals and unlimited free run
+  ---
+  duration_ms: 4.64353
+  type: 'test'
+  ...
+# Subtest: cup: sequential tracks and exact points, then a new cup is possible
+ok 133 - cup: sequential tracks and exact points, then a new cup is possible
+  ---
+  duration_ms: 0.526753
+  type: 'test'
+  ...
+# Subtest: profile: no duplicate rewards; qualified time-attack; themed HUD rewards
+ok 134 - profile: no duplicate rewards; qualified time-attack; themed HUD rewards
+  ---
+  duration_ms: 1.180965
+  type: 'test'
+  ...
+# Subtest: save/load: version, totals, medals, cup resume and invalid data tolerance
+ok 135 - save/load: version, totals, medals, cup resume and invalid data tolerance
+  ---
+  duration_ms: 1.733453
+  type: 'test'
+  ...
+# Subtest: untrusted save cannot promote locked themes or invalid cup results
+ok 136 - untrusted save cannot promote locked themes or invalid cup results
+  ---
+  duration_ms: 0.500078
+  type: 'test'
+  ...
+# Subtest: race mode configuration rejects malformed opponents and laps
+ok 137 - race mode configuration rejects malformed opponents and laps
+  ---
+  duration_ms: 13.733325
+  type: 'test'
+  ...
+# Subtest: seven rivals have unique identifiers, stable starting grid and reasonable boundaries
+ok 138 - seven rivals have unique identifiers, stable starting grid and reasonable boundaries
+  ---
+  duration_ms: 2.060254
+  type: 'test'
+  ...
+# Subtest: rivals accelerate forward with bounded speed and maintain finite geometry
+ok 139 - rivals accelerate forward with bounded speed and maintain finite geometry
+  ---
+  duration_ms: 153.353978
+  type: 'test'
+  ...
+# Subtest: ranking changes after player overtakes and offers stable tie handling
+ok 140 - ranking changes after player overtakes and offers stable tie handling
+  ---
+  duration_ms: 1.208234
+  type: 'test'
+  ...
+# Subtest: car contact is resolved physically and never creates non-finite velocity
+ok 141 - car contact is resolved physically and never creates non-finite velocity
+  ---
+  duration_ms: 0.825743
+  type: 'test'
+  ...
+# Subtest: rivals keep circulating visually after their classified finish so the line is not blocked
+ok 142 - rivals keep circulating visually after their classified finish so the line is not blocked
+  ---
+  duration_ms: 281.4762
+  type: 'test'
+  ...
+# Subtest: valid checkpoint traversal triggers complete race, immutable results and total time
+ok 143 - valid checkpoint traversal triggers complete race, immutable results and total time
+  ---
+  duration_ms: 100.480146
+  type: 'test'
+  ...
+# Subtest: contacts and invalid record laps still count as completed racing laps
+ok 144 - contacts and invalid record laps still count as completed racing laps
+  ---
+  duration_ms: 9.776041
+  type: 'test'
+  ...
+# Subtest: slipstream activates only behind another car in its wake
+ok 145 - slipstream activates only behind another car in its wake
+  ---
+  duration_ms: 0.526521
+  type: 'test'
+  ...
+# Subtest: a drafting car gains more speed and remains bounded
+ok 146 - a drafting car gains more speed and remains bounded
+  ---
+  duration_ms: 4.675409
+  type: 'test'
+  ...
+# Subtest: renderer imports local GLB and preserves driving model/wheels
+ok 147 - renderer imports local GLB and preserves driving model/wheels
+  ---
+  duration_ms: 332.462411
+  type: 'test'
+  ...
+# Subtest: renderer draws all seven distinct opponent liveries including when player uses bonnet camera
+ok 148 - renderer draws all seven distinct opponent liveries including when player uses bonnet camera
+  ---
+  duration_ms: 233.242289
+  type: 'test'
+  ...
+# Subtest: track swapping rebuilds GPU scenery and five local GLBs load on demand
+ok 149 - track swapping rebuilds GPU scenery and five local GLBs load on demand
+  ---
+  duration_ms: 467.64224
+  type: 'test'
+  ...
+# Subtest: renderer draws bounded tire-dust particles when drifting and removes them when disabled
+ok 150 - renderer draws bounded tire-dust particles when drifting and removes them when disabled
+  ---
+  duration_ms: 216.564229
+  type: 'test'
+  ...
+# Subtest: mission eleven includes three distinct stages
+ok 151 - mission eleven includes three distinct stages
+  ---
+  duration_ms: 2.906056
+  type: 'test'
+  ...
+# Subtest: Gael must disembark and stay beside rescue target
+ok 152 - Gael must disembark and stay beside rescue target
+  ---
+  duration_ms: 1.392917
+  type: 'test'
+  ...
+# Subtest: extraction requires a vehicle and police sufficiently far
+ok 153 - extraction requires a vehicle and police sufficiently far
+  ---
+  duration_ms: 2.762306
+  type: 'test'
+  ...
+# Subtest: rescue mission times out if no extraction is reached
+ok 154 - rescue mission times out if no extraction is reached
+  ---
+  duration_ms: 0.333239
+  type: 'test'
+  ...
+# Subtest: mission 13 follows the archive and reveals the leader with mixed objectives
+ok 155 - mission 13 follows the archive and reveals the leader with mixed objectives
+  ---
+  duration_ms: 3.321904
+  type: 'test'
+  ...
+# Subtest: mission 13 requires Gael on foot, stationary surveillance and investigation
+ok 156 - mission 13 requires Gael on foot, stationary surveillance and investigation
+  ---
+  duration_ms: 0.696519
+  type: 'test'
+  ...
+# Subtest: mission 13 must finish when final timed interaction is completed
+ok 157 - mission 13 must finish when final timed interaction is completed
+  ---
+  duration_ms: 0.390092
+  type: 'test'
+  ...
+# Subtest: mission 13 times out
+ok 158 - mission 13 times out
+  ---
+  duration_ms: 0.397796
+  type: 'test'
+  ...
+# Subtest: missing/bad settings recover valid defaults
+ok 159 - missing/bad settings recover valid defaults
+  ---
+  duration_ms: 4.391381
+  type: 'test'
+  ...
+# Subtest: settings persist locally and malformed JSON is safe
+ok 160 - settings persist locally and malformed JSON is safe
+  ---
+  duration_ms: 0.73922
+  type: 'test'
+  ...
+# Subtest: duplicate/remapped invalid key bindings are rejected
+ok 161 - duplicate/remapped invalid key bindings are rejected
+  ---
+  duration_ms: 0.187143
+  type: 'test'
+  ...
+# Subtest: action dispatch prioritizes customized bindings and preserves arrows
+ok 162 - action dispatch prioritizes customized bindings and preserves arrows
+  ---
+  duration_ms: 0.465025
+  type: 'test'
+  ...
+# Subtest: quality scale is bounded to supported settings
+ok 163 - quality scale is bounded to supported settings
+  ---
+  duration_ms: 0.20498
+  type: 'test'
+  ...
+# Subtest: auto quality downshifts only with sustained low FPS and cooldown
+ok 164 - auto quality downshifts only with sustained low FPS and cooldown
+  ---
+  duration_ms: 0.765883
+  type: 'test'
+  ...
+# Subtest: auto quality recovers after sustained high FPS
+ok 165 - auto quality recovers after sustained high FPS
+  ---
+  duration_ms: 0.384023
+  type: 'test'
+  ...
+# Subtest: invalid performance data cannot alter render scale
+ok 166 - invalid performance data cannot alter render scale
+  ---
+  duration_ms: 0.365425
+  type: 'test'
+  ...
+# Subtest: steering sensitivity is bounded to three safe presets
+ok 167 - steering sensitivity is bounded to three safe presets
+  ---
+  duration_ms: 0.619958
+  type: 'test'
+  ...
+# Subtest: completar encargo, dinero y mejor tiempo
+ok 168 - completar encargo, dinero y mejor tiempo
+  ---
+  duration_ms: 1.993704
+  type: 'test'
+  ...
+# Subtest: caducidad y entrega andando
+ok 169 - caducidad y entrega andando
+  ---
+  duration_ms: 4.231448
+  type: 'test'
+  ...
+# Subtest: estadísticas versionadas y persistencia segura
+ok 170 - estadísticas versionadas y persistencia segura
+  ---
+  duration_ms: 1.383867
+  type: 'test'
+  ...
+# Subtest: catálogo de tres desafíos únicos, en carreteras existentes y con recompensas
+ok 171 - catálogo de tres desafíos únicos, en carreteras existentes y con recompensas
+  ---
+  duration_ms: 5.531866
+  type: 'test'
+  ...
+# Subtest: sprint de cuatro sectores: victoria, récord individual y premio propio
+ok 172 - sprint de cuatro sectores: victoria, récord individual y premio propio
+  ---
+  duration_ms: 0.897611
+  type: 'test'
+  ...
+# Subtest: transporte delicado permite un impacto, el segundo invalida el recorrido
+ok 173 - transporte delicado permite un impacto, el segundo invalida el recorrido
+  ---
+  duration_ms: 0.21867
+  type: 'test'
+  ...
+# Subtest: transporte delicado admite daño previo y otorga recompensa si no se supera el límite
+ok 174 - transporte delicado admite daño previo y otorga recompensa si no se supera el límite
+  ---
+  duration_ms: 0.533787
+  type: 'test'
+  ...
+# Subtest: ninguna actividad permite completar controles a pie
+ok 175 - ninguna actividad permite completar controles a pie
+  ---
+  duration_ms: 0.177913
+  type: 'test'
+  ...
+# Subtest: orden, caducidad y validación de intervalo temporal en desafío nuevo
+ok 176 - orden, caducidad y validación de intervalo temporal en desafío nuevo
+  ---
+  duration_ms: 4.157908
+  type: 'test'
+  ...
+# Subtest: guardados 0.8.2 conservan saldo, historial, mejoras y sus mejores tiempos
+ok 177 - guardados 0.8.2 conservan saldo, historial, mejoras y sus mejores tiempos
+  ---
+  duration_ms: 0.701469
+  type: 'test'
+  ...
+# Subtest: cada actividad mantiene mejor tiempo separado y se puede recuperar del almacenamiento
+ok 178 - cada actividad mantiene mejor tiempo separado y se puede recuperar del almacenamiento
+  ---
+  duration_ms: 1.255815
+  type: 'test'
+  ...
+# Subtest: datos de récord adulterados se sanean, pero no se borran las compras válidas
+ok 179 - datos de récord adulterados se sanean, pero no se borran las compras válidas
+  ---
+  duration_ms: 0.513152
+  type: 'test'
+  ...
+# Subtest: bloqueo de escritura se comunica y no se conceden valores almacenados falsos
+ok 180 - bloqueo de escritura se comunica y no se conceden valores almacenados falsos
+  ---
+  duration_ms: 1.430529
+  type: 'test'
+  ...
+# Subtest: impacto en primer frame se cuenta gracias a la referencia al iniciar el encargo
+ok 181 - impacto en primer frame se cuenta gracias a la referencia al iniciar el encargo
+  ---
+  duration_ms: 0.356824
+  type: 'test'
+  ...
+# Subtest: selector de tres desafíos tiene controles únicos, accesibles y enlazados
+ok 182 - selector de tres desafíos tiene controles únicos, accesibles y enlazados
+  ---
+  duration_ms: 3.62271
+  type: 'test'
+  ...
+# Subtest: el controlador enlaza el desafío a reinicio, HUD, minimapa, recompensas y resultados
+ok 183 - el controlador enlaza el desafío a reinicio, HUD, minimapa, recompensas y resultados
+  ---
+  duration_ms: 0.702577
+  type: 'test'
+  ...
+# Subtest: señales con ciclo determinista y fases
+ok 184 - señales con ciclo determinista y fases
+  ---
+  duration_ms: 0.823724
+  type: 'test'
+  ...
+# Subtest: el semáforo obliga a ceder al aproximarse
+ok 185 - el semáforo obliga a ceder al aproximarse
+  ---
+  duration_ms: 0.4257
+  type: 'test'
+  ...
+# Subtest: un vehículo aparcado no avanza con el tráfico
+ok 186 - un vehículo aparcado no avanza con el tráfico
+  ---
+  duration_ms: 0.642119
+  type: 'test'
+  ...
+# Subtest: sixth chapter defines a surveillance objective, followed by escape and delivery
+ok 187 - sixth chapter defines a surveillance objective, followed by escape and delivery
+  ---
+  duration_ms: 3.304051
+  type: 'test'
+  ...
+# Subtest: stakeout timer expires without holding checkpoint
+ok 188 - stakeout timer expires without holding checkpoint
+  ---
+  duration_ms: 0.493281
+  type: 'test'
+  ...
+# Subtest: suspect follows the drivable road network without leaving it
+ok 189 - suspect follows the drivable road network without leaving it
+  ---
+  duration_ms: 97.198885
+  type: 'test'
+  ...
+# Subtest: chapter 07 requires a sustained safe following distance
+ok 190 - chapter 07 requires a sustained safe following distance
+  ---
+  duration_ms: 1.407689
+  type: 'test'
+  ...
+# Subtest: tail fails after extended loss and close driving cancels progress
+ok 191 - tail fails after extended loss and close driving cancels progress
+  ---
+  duration_ms: 0.235026
+  type: 'test'
+  ...
+# Subtest: chapter 07 campaign configuration is reachable
+ok 192 - chapter 07 campaign configuration is reachable
+  ---
+  duration_ms: 0.178711
+  type: 'test'
+  ...
+# Subtest: traffic spawns as finite agents anchored to known roads
+ok 193 - traffic spawns as finite agents anchored to known roads
+  ---
+  duration_ms: 3.905063
+  type: 'test'
+  ...
+# Subtest: traffic advances deterministically and pauses around player
+ok 194 - traffic advances deterministically and pauses around player
+  ---
+  duration_ms: 28.128867
+  type: 'test'
+  ...
+# Subtest: route reverses at terminus and handles malformed timestep
+ok 195 - route reverses at terminus and handles malformed timestep
+  ---
+  duration_ms: 0.375074
+  type: 'test'
+  ...
+# Subtest: Gael no atraviesa un coche estacionado
+ok 196 - Gael no atraviesa un coche estacionado
+  ---
+  duration_ms: 2.40446
+  type: 'test'
+  ...
+# Subtest: sin obstáculos Gael puede avanzar
+ok 197 - sin obstáculos Gael puede avanzar
+  ---
+  duration_ms: 0.549732
+  type: 'test'
+  ...
+# Subtest: los semáforos visibles poseen ubicaciones finitas sobre el trazado
+ok 198 - los semáforos visibles poseen ubicaciones finitas sobre el trazado
+  ---
+  duration_ms: 0.532128
+  type: 'test'
+  ...
+# Subtest: Gael no atraviesa vehículos aunque el intervalo de simulación sea grande
+ok 199 - Gael no atraviesa vehículos aunque el intervalo de simulación sea grande
+  ---
+  duration_ms: 0.249894
+  type: 'test'
+  ...
+# Subtest: Gael deja de animar sus pasos cuando está quieto
+ok 200 - Gael deja de animar sus pasos cuando está quieto
+  ---
+  duration_ms: 0.270765
+  type: 'test'
+  ...
+# Subtest: correr acelera el movimiento a pie sin alterar los controles de conducción
+ok 201 - correr acelera el movimiento a pie sin alterar los controles de conducción
+  ---
+  duration_ms: 0.478665
+  type: 'test'
+  ...
+# Subtest: street graph creates deterministic connected routes
+ok 202 - street graph creates deterministic connected routes
+  ---
+  duration_ms: 3.52836
+  type: 'test'
+  ...
+# Subtest: patrol stays on streets during chase
+ok 203 - patrol stays on streets during chase
+  ---
+  duration_ms: 59.622245
+  type: 'test'
+  ...
+# Subtest: urban collision dampens speed and has a cooldown
+ok 204 - urban collision dampens speed and has a cooldown
+  ---
+  duration_ms: 0.415474
+  type: 'test'
+  ...
+# Subtest: no contact at safe separation
+ok 205 - no contact at safe separation
+  ---
+  duration_ms: 0.188584
+  type: 'test'
+  ...
+# Subtest: garaje accesible solo en ciudad, inmóvil y sin alerta policial
+ok 206 - garaje accesible solo en ciudad, inmóvil y sin alerta policial
+  ---
+  duration_ms: 1.922298
+  type: 'test'
+  ...
+# Subtest: guardar un coche conserva daños y permite actualizar la misma plaza
+ok 207 - guardar un coche conserva daños y permite actualizar la misma plaza
+  ---
+  duration_ms: 2.361523
+  type: 'test'
+  ...
+# Subtest: seis modelos distintos como máximo y rechazo de ids falsos
+ok 208 - seis modelos distintos como máximo y rechazo de ids falsos
+  ---
+  duration_ms: 0.588577
+  type: 'test'
+  ...
+# Subtest: guardado malformado y manipulado se sanea y no daña a campaña o economía
+ok 209 - guardado malformado y manipulado se sanea y no daña a campaña o economía
+  ---
+  duration_ms: 1.061065
+  type: 'test'
+  ...
+# Subtest: almacenamiento bloqueado no altera el estado, el coche ni los créditos
+ok 210 - almacenamiento bloqueado no altera el estado, el coche ni los créditos
+  ---
+  duration_ms: 0.573864
+  type: 'test'
+  ...
+# Subtest: recuperar mantiene mejoras mecánicas por modelo pero no inventa reparaciones
+ok 211 - recuperar mantiene mejoras mecánicas por modelo pero no inventa reparaciones
+  ---
+  duration_ms: 0.732088
+  type: 'test'
+  ...
+# Subtest: intercambio atómico conserva daños del coche dejado y no permite recuperar el activo
+ok 212 - intercambio atómico conserva daños del coche dejado y no permite recuperar el activo
+  ---
+  duration_ms: 0.633503
+  type: 'test'
+  ...
+# Subtest: dust mesh has valid vertices and colors
+ok 213 - dust mesh has valid vertices and colors
+  ---
+  duration_ms: 1.727768
+  type: 'test'
+  ...
+# Subtest: effects stay idle at low speed, spawn on drift and retire deterministically
+ok 214 - effects stay idle at low speed, spawn on drift and retire deterministically
+  ---
+  duration_ms: 1.786128
+  type: 'test'
+  ...
+# Subtest: effects control disables work and reenables emission
+ok 215 - effects control disables work and reenables emission
+  ---
+  duration_ms: 0.431675
+  type: 'test'
+  ...
+# Subtest: el taller requiere proximidad, vehículo parado y ausencia de policía
+ok 216 - el taller requiere proximidad, vehículo parado y ausencia de policía
+  ---
+  duration_ms: 2.745635
+  type: 'test'
+  ...
+# Subtest: reparación: coste, débito, sin daño, saldo insuficiente y sin mutación accidental
+ok 217 - reparación: coste, débito, sin daño, saldo insuficiente y sin mutación accidental
+  ---
+  duration_ms: 2.159767
+  type: 'test'
+  ...
+# Subtest: mejoras exclusivas por modelo con máximo de dos niveles y costes progresivos
+ok 218 - mejoras exclusivas por modelo con máximo de dos niveles y costes progresivos
+  ---
+  duration_ms: 0.575412
+  type: 'test'
+  ...
+# Subtest: guardado antiguo v1 migrable y niveles manipulados saneados
+ok 219 - guardado antiguo v1 migrable y niveles manipulados saneados
+  ---
+  duration_ms: 0.626688
+  type: 'test'
+  ...
+# Subtest: compra persistida sin pérdida de progreso previo y error de almacenamiento controlable
+ok 220 - compra persistida sin pérdida de progreso previo y error de almacenamiento controlable
+  ---
+  duration_ms: 0.343808
+  type: 'test'
+  ...
+# Subtest: sin modificaciones en las físicas de los circuitos arcade
+ok 221 - sin modificaciones en las físicas de los circuitos arcade
+  ---
+  duration_ms: 2.23302
+  type: 'test'
+  ...
+# Subtest: compras rechazan saldo adulterado sin generar crédito
+ok 222 - compras rechazan saldo adulterado sin generar crédito
+  ---
+  duration_ms: 0.324816
+  type: 'test'
+  ...
+1..222
+# tests 222
+# suites 0
+# pass 222
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4035.771206
+
+> chase-404@0.8.6 assets:validate
+> node tools/validate_assets.mjs
+
+OK blaze.glb: 1034 triángulos, 82.5 KiB
+OK comet.glb: 672 triángulos, 53.9 KiB
+OK falcon.glb: 672 triángulos, 53.9 KiB
+OK nova.glb: 684 triángulos, 54.8 KiB
+OK racer-04.glb: 648 triángulos, 52.0 KiB
+OK viper.glb: 696 triángulos, 55.8 KiB
+Validación GLB: 6/6 correctos
+AUDITORÍA ESTÁTICA: CORRECTA · 158 IDs únicos · 40 botones conectados · 149 referencias HTML · 3 recursos HTML · 31 módulos · 73 puntos accesibles (máx 0.0 m) · 15 misiones · 3 desafíos · 8 secretos · 3 personajes

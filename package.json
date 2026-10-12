@@ -1,0 +1,22 @@
+{
+  "name": "chase-404",
+  "version": "0.14.7",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "check": "node --check src/campaign-session.js && node --check src/navigation-guard.js && node --check src/runtime-guard.js && node --check src/mission-report.js && node --check src/objective-presentation.js && node --check src/threat-feedback.js && node --check src/story-actors.js && node --check src/story-scenes.js && node --check src/contact-animation.js && node --check src/dialogue-presentation.js && node --check src/atmosphere.js && node --check src/camera-rig.js && node --check src/performance.js && node --check src/soundscape.js && node --check src/mission.js && node --check src/city.js && node --check src/controls.js && node --check src/settings.js && node --check src/track.js && node --check src/garage.js && node --check src/physics.js && node --check src/geometry.js && node --check src/glb.js && node --check src/renderer.js && node --check src/audio.js && node --check src/vfx.js && node --check src/race.js && node --check src/progression.js && node --check src/main.js && node --check tools/build_fleet_glb.mjs && node --check tools/validate_assets.mjs && node --check src/hero-car.js && node --check src/traffic.js && node --check src/police.js && node --check src/road-network.js && node --check src/urban-collisions.js && node --check src/damage.js && node --check src/on-foot.js && node --check src/signals.js && node --check src/suspect.js && node --check src/campaign-choice.js && node --check src/final-choice.js && node --check src/side-activities.js && node --check src/workshop.js && node --check src/vehicle-collection.js && node --check src/discoveries.js && node --check src/contacts.js && node --check src/gael-model.js && node --check src/art-direction.js && node --check src/vehicle-detail.js && node --check tools/build_gael_glb.mjs",
+    "assets:validate": "node tools/validate_assets.mjs",
+    "assets:validate:staging": "node tools/validate_assets.mjs assets/staging",
+    "assets:build": "node tools/build_fleet_glb.mjs",
+    "audit": "npm run check && npm test && npm run assets:validate && node tools/audit_project.mjs && npm run release:gate && npm run site:prepare",
+    "release:gate": "node tools/release_gate.mjs",
+    "first-run:check": "python3 tools/first_run_check.py",
+    "site:prepare": "node tools/prepare_site.mjs",
+    "acceptance:gate": "node tools/acceptance_gate.mjs",
+    "acceptance:play": "node tools/manual_evidence_gate.mjs",
+    "qa:manual": "node tools/manual_qa_registry.mjs",
+    "qa:triage": "node tools/qa_triage.mjs",
+    "gael:build": "node tools/build_gael_glb.mjs"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "checks": {},
+  "errors": [
+    "Browser flow: Error('Page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at http://daytona.test/index.html\\nCall log:\\n  - navigating to \"http://daytona.test/index.html\", waiting until \"load\"\\n')"
+  ],
+  "passed": 0,
+  "total": 0
+}

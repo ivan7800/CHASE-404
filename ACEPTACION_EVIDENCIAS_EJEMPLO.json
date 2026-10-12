@@ -1,0 +1,89 @@
+{
+  "description": "Plantilla: COPIAR como ACEPTACION_EVIDENCIAS.json solo tras pruebas reales; no rellenar sin evidencia",
+  "checks": [
+    {
+      "id": "A01",
+      "status": "pending",
+      "date": "",
+      "environment": "",
+      "evidence": ""
+    },
+    {
+      "id": "A02",
+      "status": "pending",
+      "date": "",
+      "environment": "",
+      "evidence": ""
+    },
+    {
+      "id": "A03",
+      "status": "pending",
+      "date": "",
+      "environment": "",
+      "evidence": ""
+    },
+    {
+      "id": "A04",
+      "status": "pending",
+      "date": "",
+      "environment": "",
+      "evidence": ""
+    },
+    {
+      "id": "A05",
+      "status": "pending",
+      "date": "",
+      "environment": "",
+      "evidence": ""
+    },
+    {
+      "id": "A06",
+      "status": "pending",
+      "date": "",
+      "environment": "",
+      "evidence": ""
+    },
+    {
+      "id": "A07",
+      "status": "pending",
+      "date": "",
+      "environment": "",
+      "evidence": ""
+    },
+    {
+      "id": "A08",
+      "status": "pending",
+      "date": "",
+      "environment": "",
+      "evidence": ""
+    },
+    {
+      "id": "A09",
+      "status": "pending",
+      "date": "",
+      "environment": "",
+      "evidence": ""
+    },
+    {
+      "id": "A10",
+      "status": "pending",
+      "date": "",
+      "environment": "",
+      "evidence": ""
+    },
+    {
+      "id": "A11",
+      "status": "pending",
+      "date": "",
+      "environment": "",
+      "evidence": ""
+    },
+    {
+      "id": "A12",
+      "status": "pending",
+      "date": "",
+      "environment": "",
+      "evidence": ""
+    }
+  ]
+}
