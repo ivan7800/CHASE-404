@@ -1,3 +1,10 @@
+## v0.18.0 — Recorrido piloto del Carmel
+
+- Tres manzanas contiguas reciben balcones y una fachada comercial con toldo y rótulo.
+- Tres tramos de escaleras conectan la pendiente con recorridos peatonales; se añaden barandillas y se comprueban accesibilidad y colisiones.
+- La ciudad suma 396.975 vértices, dentro del límite de 400.000.
+- Pendiente inspección visual en WebGL, conducción manual y medición real de FPS; se mantiene ALPHA.
+
 ## v0.17.0 — Primera muestra de calles y viviendas en pendiente del Carmel
 
 - Tres vías principales y ocho calles locales del Carmel reciben perfiles de calzada y acera más estrechos; el resto de barrios conserva su anchura previa.
