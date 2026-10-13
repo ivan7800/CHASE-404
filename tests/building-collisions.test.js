@@ -47,7 +47,8 @@ test('driving into a Carmel house stops without a centerline teleport',()=>{
 test('walking and car exits respect the same house footprint',()=>{
  const foot=makePedestrian();Object.assign(foot,{active:true,x:-196,z:-112,yaw:Math.PI,viewYaw:Math.PI});
  for(let i=0;i<220;i++)stepPedestrian(foot,{throttle:true},1/60);
- assert.ok(foot.z>-125.3&&foot.z<-122,`walker stopped at wall: ${foot.z}`);
+ const facade=CITY_BUILDING_COLLIDERS.find(v=>v.id==='building-3');
+ assert.ok(Math.abs(foot.z-(facade.maxZ+.55))<.08,`walker stopped at facade: ${foot.z}`);
  assert.equal(cityBuildingAt(foot.x,foot.z,.5),null);
  const car=createUrbanCar();Object.assign(car,{x:-196,z:-119,yaw:0,speed:0});
  const bothSides=[{x:car.x+3.9,z:car.z},{x:car.x-3.9,z:car.z}];

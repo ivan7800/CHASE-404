@@ -65,10 +65,10 @@ export function step(car,input,dt){
    car.vx*=.78;car.vz*=.78;car.speed*=.55;
   }
   const street=nearestStreet(car.x,car.z);car.offset=street.distance;
-  car.offroad=street.distance>CITY.roadHalf;car.cityWallTime=Math.max(0,(car.cityWallTime||0)-dt);
+  car.offroad=street.distance>street.roadHalf;car.cityWallTime=Math.max(0,(car.cityWallTime||0)-dt);
   car.wall=Boolean(building.hit)||car.cityWallTime>0;
   if(car.offroad){car.speed*=1-.9*dt;car.vx*=1-.65*dt;car.vz*=1-.65*dt;}
-  const maxDistance=CITY.sidewalkHalf+2;
+  const maxDistance=street.sidewalkHalf+2;
   if(street.distance>maxDistance){
    const nx=(car.x-street.x)/street.distance,nz=(car.z-street.z)/street.distance;
    car.x=street.x+nx*maxDistance;car.z=street.z+nz*maxDistance;

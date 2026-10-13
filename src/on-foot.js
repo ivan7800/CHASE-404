@@ -4,6 +4,7 @@ import {cityBuildingAt} from './urban-buildings.js';
 import {getCar} from './garage.js';
 import {initDamage} from './damage.js';
 export const INTERACT_RADIUS=8;
+const pedestrianReach=street=>Math.max(CITY.sidewalkHalf+2,street.sidewalkHalf+2);
 export function makePedestrian(){return {active:false,x:0,z:0,yaw:0,viewYaw:0,step:0,moving:false,running:false};}
 export function exitVehicle(foot,car,obstacles=[]){
  if(foot.active||Math.abs(car.speed)>.8)return false;
@@ -11,7 +12,8 @@ export function exitVehicle(foot,car,obstacles=[]){
  for(const side of [1,-1]){
   const x=car.x+Math.cos(car.yaw)*3.9*side,z=car.z-Math.sin(car.yaw)*3.9*side;
   if(!Number.isFinite(x)||!Number.isFinite(z)||Math.abs(x)>=CITY.bounds||Math.abs(z)>=CITY.bounds)continue;
-  if(nearestStreet(x,z).distance>CITY.sidewalkHalf+2)continue;
+  const street=nearestStreet(x,z);
+  if(street.distance>pedestrianReach(street))continue;
   if(cityBuildingAt(x,z,.55))continue;
   if(obstacles.some(v=>v&&Number.isFinite(v.x)&&Number.isFinite(v.z)&&Math.hypot(x-v.x,z-v.z)<2.6))continue;
   Object.assign(foot,{active:true,x,z,yaw:car.yaw,viewYaw:car.yaw,step:0,moving:false,running:false});return true;
@@ -34,7 +36,8 @@ export function stepPedestrian(foot,input,dt,obstacles=[]){
  const vx=(f*Math.sin(viewYaw)+s*Math.cos(viewYaw))/mag*pace;
  const vz=(f*Math.cos(viewYaw)-s*Math.sin(viewYaw))/mag*pace;
  const collision=(x,z)=>{
-  if(Math.abs(x)>=CITY.bounds||Math.abs(z)>=CITY.bounds||nearestStreet(x,z).distance>CITY.sidewalkHalf+2||cityBuildingAt(x,z,.5))return true;
+  const street=nearestStreet(x,z);
+  if(Math.abs(x)>=CITY.bounds||Math.abs(z)>=CITY.bounds||street.distance>pedestrianReach(street)||cityBuildingAt(x,z,.5))return true;
   return obstacles.some((v,i)=>v&&Number.isFinite(v.x)&&Number.isFinite(v.z)&&Math.hypot(x-v.x,z-v.z)<(i===0?2.4:2.1));
  };
  // Subdivide long frame intervals to prevent tunnelling and allow wall sliding.
