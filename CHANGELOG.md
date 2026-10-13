@@ -1,3 +1,11 @@
+## v0.16.0 — Colisiones urbanas y fachadas del Carmel
+
+- Colisión barrida para la huella del coche, deslizamiento por fachadas y comprobación de edificios al caminar o salir del vehículo.
+- Parcelas residenciales reubicadas para dejar libre la calzada y eliminar casas superpuestas; cinco edificios de Gràcia, Eixample y puerto apartados de rutas transitables.
+- Fachadas orientadas a la calle con zócalos, portales, ventanas, cornisas y toldos en las viviendas más visibles.
+- Terreno lejano con malla más espaciada: 381.105 vértices en la ciudad frente a 399.165 en v0.15.0.
+- 96 archivos de pruebas correctos y puertas estáticas superadas. Revisión en navegador real y FPS aún pendientes.
+
 ## v0.14.5 — Fase 11.21 · Identidad de barrios
 - Remates arquitectónicos en 12 edificios del Eixample, 7 cubiertas industriales del puerto y 8 almenas de Montjuïc.
 - Nuevos elementos solo sobre estructuras existentes, sin modificar carreteras, colisiones o conducción.

@@ -1,5 +1,6 @@
 /** Pedestrian state for Gael Verenne. No vehicle may be entered while moving. */
 import {nearestStreet,CITY} from './city.js';
+import {cityBuildingAt} from './urban-buildings.js';
 import {getCar} from './garage.js';
 import {initDamage} from './damage.js';
 export const INTERACT_RADIUS=8;
@@ -11,6 +12,7 @@ export function exitVehicle(foot,car,obstacles=[]){
   const x=car.x+Math.cos(car.yaw)*3.9*side,z=car.z-Math.sin(car.yaw)*3.9*side;
   if(!Number.isFinite(x)||!Number.isFinite(z)||Math.abs(x)>=CITY.bounds||Math.abs(z)>=CITY.bounds)continue;
   if(nearestStreet(x,z).distance>CITY.sidewalkHalf+2)continue;
+  if(cityBuildingAt(x,z,.55))continue;
   if(obstacles.some(v=>v&&Number.isFinite(v.x)&&Number.isFinite(v.z)&&Math.hypot(x-v.x,z-v.z)<2.6))continue;
   Object.assign(foot,{active:true,x,z,yaw:car.yaw,viewYaw:car.yaw,step:0,moving:false,running:false});return true;
  }
@@ -32,7 +34,7 @@ export function stepPedestrian(foot,input,dt,obstacles=[]){
  const vx=(f*Math.sin(viewYaw)+s*Math.cos(viewYaw))/mag*pace;
  const vz=(f*Math.cos(viewYaw)-s*Math.sin(viewYaw))/mag*pace;
  const collision=(x,z)=>{
-  if(Math.abs(x)>=CITY.bounds||Math.abs(z)>=CITY.bounds||nearestStreet(x,z).distance>CITY.sidewalkHalf+2)return true;
+  if(Math.abs(x)>=CITY.bounds||Math.abs(z)>=CITY.bounds||nearestStreet(x,z).distance>CITY.sidewalkHalf+2||cityBuildingAt(x,z,.5))return true;
   return obstacles.some((v,i)=>v&&Number.isFinite(v.x)&&Number.isFinite(v.z)&&Math.hypot(x-v.x,z-v.z)<(i===0?2.4:2.1));
  };
  // Subdivide long frame intervals to prevent tunnelling and allow wall sliding.

@@ -1,5 +1,6 @@
 import {ROAD_HALF, SHOULDER, LENGTH, START_S, project, startPose, wrap, getCheckpoints} from './track.js';
-import {cityStartPose,nearestStreet} from './city.js';
+import {cityStartPose,nearestStreet,CITY} from './city.js';
+import {resolveCityBuildingMove} from './urban-buildings.js';
 import {initDamage,damageCondition} from './damage.js';
 export const FIXED_STEP=1/120;
 export function createCar(){return {tune:{power:1,topSpeed:1,grip:1,steer:1,brakes:1}, ...startPose(),speed:0,steer:0,headingSpeed:0,kmh:0,offset:0,offroad:false,wall:false,travel:START_S,lap:1,completed:0, lapTime:0, elapsed:0,best:null,gate:0, valid:true,slide:0, wheel:0,hitCooldown:0,invalidLaps:0 };}
@@ -52,15 +53,30 @@ export function step(car,input,dt){
   const difference=Math.atan2(Math.sin(velAngle-car.yaw),Math.cos(velAngle-car.yaw));
   car.yaw+=difference*Math.min(1,dt*1.8);
  }
+ const previousX=car.x,previousZ=car.z;
  car.x+=car.vx*dt;car.z+=car.vz*dt;
  if(car.urban){
-  const street=nearestStreet(car.x,car.z);car.offset=street.distance;
-  car.offroad=street.distance>10.2;car.cityWallTime=Math.max(0,(car.cityWallTime||0)-dt);car.wall=car.cityWallTime>0;
-  if(car.offroad){car.speed*=1-.9*dt;car.vx*=1-.65*dt;car.vz*=1-.65*dt;}
-  if(street.distance>16.2){
-   car.x=street.x;car.z=street.z;car.speed=Math.min(car.speed,17);car.speed*=Math.max(0,1-3*dt);
-   car.wall=true;car.cityWallTime=.18;car.vx*=.55;car.vz*=.55;
+  const building=resolveCityBuildingMove(previousX,previousZ,car.x,car.z,
+   {radius:1.65,along:[-2.25,0,2.25],yaw:car.yaw});
+  car.x=building.x;car.z=building.z;
+  if(building.hit){
+   const {nx,nz}=building.hit,normal=car.vx*nx+car.vz*nz;
+   if(normal<0){car.vx-=normal*nx;car.vz-=normal*nz;}
+   car.vx*=.78;car.vz*=.78;car.speed*=.55;
   }
+  const street=nearestStreet(car.x,car.z);car.offset=street.distance;
+  car.offroad=street.distance>CITY.roadHalf;car.cityWallTime=Math.max(0,(car.cityWallTime||0)-dt);
+  car.wall=Boolean(building.hit)||car.cityWallTime>0;
+  if(car.offroad){car.speed*=1-.9*dt;car.vx*=1-.65*dt;car.vz*=1-.65*dt;}
+  const maxDistance=CITY.sidewalkHalf+2;
+  if(street.distance>maxDistance){
+   const nx=(car.x-street.x)/street.distance,nz=(car.z-street.z)/street.distance;
+   car.x=street.x+nx*maxDistance;car.z=street.z+nz*maxDistance;
+   const outward=car.vx*nx+car.vz*nz;
+   if(outward>0){car.vx-=nx*outward;car.vz-=nz*outward;}
+   car.speed*=.72;car.wall=true;
+  }
+  if(car.wall)car.cityWallTime=.18;
   car.elapsed+=dt;car.lapTime+=dt;car.kmh=Math.round(Math.abs(car.speed)*3.6);car.wheel+=car.speed*dt/.42;
   car.slide+=(Math.abs(car.steer)*Math.abs(car.speed)*(input.handbrake?.01:.001)-car.slide)*Math.min(1,dt*7);
   car.hitCooldown=Math.max(0,car.hitCooldown-dt);return car;
