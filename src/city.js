@@ -52,6 +52,17 @@ const streets=[
 ];
 const streetProfiles=Object.freeze(streets.map((_,index)=>Object.freeze(index<3?{roadHalf:5.8,sidewalkHalf:8.1}:index<11?{roadHalf:4.6,sidewalkHalf:6.6}:null)));
 export const CITY=Object.freeze({name:'EL CARMEL',year:1984,streets:Object.freeze(streets.map(s=>Object.freeze(s.map(p=>Object.freeze(p))))),streetProfiles,bounds:1750,roadHalf:10.2,sidewalkHalf:14.2,viewpoint:[214,-122]});
+export const CARMEL_PILOT_BLOCKS=Object.freeze([
+ Object.freeze({id:'carmel-pilot-1',minX:160,maxX:240,minZ:0,maxZ:80}),
+ Object.freeze({id:'carmel-pilot-2',minX:160,maxX:240,minZ:80,maxZ:160}),
+ Object.freeze({id:'carmel-pilot-3',minX:160,maxX:240,minZ:160,maxZ:240})
+]);
+export const CARMEL_PILOT_STAIRS=Object.freeze([
+ Object.freeze({x1:170,z1:90,x2:170,z2:130}),
+ Object.freeze({x1:170,z1:130,x2:170,z2:170}),
+ Object.freeze({x1:170,z1:170,x2:170,z2:210})
+]);
+export const CARMEL_PILOT_IRON=Object.freeze([73,83,79]);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export function streetProfile(index){return CITY.streetProfiles[index]||{roadHalf:CITY.roadHalf,sidewalkHalf:CITY.sidewalkHalf};}
 
@@ -236,6 +247,47 @@ function buildCarmelHouseFront(g,x,z,w,d,h,y,index){
  }
 }
 
+function buildPilotBalcony(g,x,z,w,d,h,y,index){
+ const street=nearestStreet(x,z),dx=street.x-x,dz=street.z-z;
+ const axis=Math.abs(dx)>Math.abs(dz)?'x':'z',sign=Math.sign(axis==='x'?dx:dz)||1;
+ const width=axis==='x'?d:w,face=axis==='x'?w/2:d/2;
+ const balconyY=Math.min(h-2.6,5.1+(index%2)*2.7),center=index%2?width*.18:-width*.18;
+ const onFace=(along,height,span,tall,depth,out,color)=>{
+  if(axis==='x')g.box(x+sign*(face+out),y+height,z+along,depth,tall,span,color);
+  else g.box(x+along,y+height,z+sign*(face+out),span,tall,depth,color);
+ };
+ const stone=[117,101,82],iron=CARMEL_PILOT_IRON;
+ onFace(center,balconyY,3.8,.18,1.05,.62,stone);
+ onFace(center,balconyY+.66,3.8,.13,.14,1.08,iron);
+ for(const side of [-1,1]){
+  const post=center+side*1.78;
+  onFace(post,balconyY+.37,.13,.72,.14,1.08,iron);
+ }
+ for(let rail=1;rail<=2;rail++)onFace(center,balconyY+rail*.22,3.55,.065,.08,1.08,iron);
+}
+
+function buildPilotShop(g,x,z,w,d,y){
+ const street=nearestStreet(x,z),dx=street.x-x,dz=street.z-z;
+ const axis=Math.abs(dx)>Math.abs(dz)?'x':'z',sign=Math.sign(axis==='x'?dx:dz)||1;
+ const width=axis==='x'?d:w,face=axis==='x'?w/2:d/2;
+ const onFace=(along,height,span,tall,depth,out,color)=>{
+  if(axis==='x')g.box(x+sign*(face+out),y+height,z+along,depth,tall,span,color);
+  else g.box(x+along,y+height,z+sign*(face+out),span,tall,depth,color);
+ };
+ const shopWidth=Math.min(width*.68,12.5),center=width*.16;
+ onFace(center,4.55,shopWidth,.78,.22,.4,[55,65,62]);
+ onFace(center,4.55,shopWidth-.32,.54,.09,.57,[153,102,66]);
+ for(let stripe=0;stripe<7;stripe++){
+  const along=center-shopWidth*.42+stripe*shopWidth*.14;
+  onFace(along,3.75,shopWidth*.14,.16,1.05,.77,stripe%2?[205,187,146]:[119,139,126]);
+ }
+ onFace(center,3.47,shopWidth*.8,.24,1.12,1.12,[84,74,60]);
+ const bar=[['110','101','110','101','110'],['010','101','111','101','101'],['110','101','110','101','101']];
+ const pixel=.18,start=center-pixel*5.7;
+ for(let letter=0;letter<bar.length;letter++)for(let row=0;row<5;row++)for(let col=0;col<3;col++)if(bar[letter][row][col]==='1')
+  onFace(start+(letter*4+col)*pixel,4.38+(4-row)*pixel,pixel*.75,pixel*.75,.10,.71,[238,216,173]);
+}
+
 export function terrainHeightForFootprint(x,z,w,d){
  let highest=-Infinity;
  for(const [length,point] of [[w,t=>[x-w/2+t*w,z-d/2]],[w,t=>[x-w/2+t*w,z+d/2]],
@@ -305,16 +357,31 @@ function buildHousing(g){
    if(!upper&&k===0){g.box(x,ground+2.4,z+d/2+.5,w*.62,.22,.9,[113,87,62]);g.box(x,ground+3.3,z+d/2+.85,w*.62,1.4,.14,[59,78,82]);}
    if(!selfBuilt&&featured<50&&nearestStreet(x,z).distance<42)
     buildCarmelHouseFront(g,x,z,w,d,h,ground,featured++);
+   const pilotBlock=ix===5&&iz>=3&&iz<=5;
+   if(pilotBlock&&!selfBuilt)buildPilotBalcony(g,x,z,w,d,h,ground,ix*36+iz*3+k);
+   if(pilotBlock&&iz===4&&k===0)buildPilotShop(g,x,z,w,d,ground);
   }
  }
 }
 
 function buildNeighborhoodDetails(g){
- // Stair streets, stepped landings, handrails and neighborhood light poles.
- const stairs=[[-104,84,-104,126],[-78,-106,-42,-106],[48,44,48,87],[184,-5,220,-5]];
- for(const [x1,z1,x2,z2] of stairs){
+ // A continuous hillside stair links three pilot blocks to walkable streets.
+ for(const {x1,z1,x2,z2} of CARMEL_PILOT_STAIRS){
   const n=14;for(let i=0;i<n;i++){const t=i/n,x=x1+(x2-x1)*t,z=z1+(z2-z1)*t,y=cityElevation(x,z);g.box(x,y+.12+i*.035,z,4,.24,2.2,[133,127,110]);}
-  const mx=(x1+x2)/2,mz=(z1+z2)/2,my=cityElevation(mx,mz);g.box(mx+2.5,my+1.7,mz,.16,3.4,Math.hypot(x2-x1,z2-z1),[83,88,84]);
+  const dx=x2-x1,dz=z2-z1,len=Math.hypot(dx,dz),nx=-dz/len,nz=dx/len,railSegments=8;
+  const railColor=CARMEL_PILOT_IRON;
+  const railBeam=(a,b)=>{
+   const rx=-(b[2]-a[2])/Math.hypot(b[0]-a[0],b[2]-a[2]),rz=(b[0]-a[0])/Math.hypot(b[0]-a[0],b[2]-a[2]);
+   const point=(p,side,up)=>[p[0]+rx*side*.07,p[1]+up*.07,p[2]+rz*side*.07];
+   const al=point(a,-1,-1),ar=point(a,1,-1),at=point(a,-1,1),au=point(a,1,1);
+   const bl=point(b,-1,-1),br=point(b,1,-1),bt=point(b,-1,1),bu=point(b,1,1);
+   g.quad(al,bl,bt,at,railColor);g.quad(ar,au,bu,br,railColor);g.quad(at,bt,bu,au,railColor);g.quad(al,ar,br,bl,railColor);
+  };
+  for(const side of [-1,1]){
+   const railPoint=t=>{const x=x1+dx*t+nx*side*2.35,z=z1+dz*t+nz*side*2.35;return [x,cityElevation(x,z)+1.15,z];};
+   for(let i=0;i<railSegments;i++)railBeam(railPoint(i/railSegments),railPoint((i+1)/railSegments));
+   for(let i=0;i<=railSegments;i+=3){const [px,py,pz]=railPoint(i/railSegments);g.cylinder(px,py-.72,pz,.075,1.45,6,railColor);}
+  }
  }
  for(const path of CITY.streets)for(let i=1;i<path.length;i+=2){
   const [x,z]=path[i],side=(i%2?1:-1),lx=x+side*17,lz=z+side*8,y=cityElevation(lx,lz);

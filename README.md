@@ -1,6 +1,6 @@
 # CHASE 404 — Barcelona 1984
 
-**Versión 0.17.0 ALPHA · Muestra urbana del Carmel.** Las primeras calles del barrio tienen calzadas y aceras más estrechas; las viviendas en pendiente se asientan con zócalos de piedra. Se conservan colisiones para coche y peatón. La revisión visual en WebGL, conducción real y FPS siguen pendientes de prueba manual.
+**Versión 0.18.0 ALPHA · Recorrido piloto del Carmel.** Tres manzanas reúnen viviendas con balcones, una fachada comercial y una bajada peatonal con barandillas; las calles del barrio tienen calzadas y aceras más estrechas, y las casas en pendiente se asientan con zócalos de piedra. Se conservan colisiones para coche y peatón. La revisión visual en WebGL, conducción real y FPS siguen pendientes de prueba manual.
 
 Videojuego original de conducción arcade ambientado en una Barcelona ficticia y condensada de 1984. Incluye 15 misiones principales, dos desenlaces, tres encargos secundarios, exploración libre, seis modelos de coches, taller, garaje, secretos y personajes con historias secundarias. Se ejecuta en el navegador con WebGL y archivos locales; no requiere cuenta, servidor remoto ni servicios externos.
 
@@ -41,7 +41,7 @@ Los ajustes y avances se almacenan en `localStorage` del navegador. Borrar datos
 
 ## Verificación y estado
 
-La muestra de calles y cimentaciones del Carmel y sus verificaciones se documentan en [QA_v0.17.0.md](QA_v0.17.0.md). Las colisiones y el remate urbano anterior se describen en [QA_v0.16.0.md](QA_v0.16.0.md).
+La muestra de calles y cimentaciones del Carmel y sus verificaciones se documentan en [QA_v0.18.0.md](QA_v0.18.0.md). La fase anterior se documenta en [QA_v0.17.0.md](QA_v0.17.0.md). Las colisiones y el remate urbano anterior se describen en [QA_v0.16.0.md](QA_v0.16.0.md).
 
 - `npm run audit`: sintaxis, tests, assets, conexiones estáticas de UI y puerta de distribución.
 - `npm run release:gate`: presencia de recursos, consistencia de versión y archivos de publicación.
