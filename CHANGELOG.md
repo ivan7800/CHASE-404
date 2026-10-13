@@ -1,3 +1,10 @@
+## v0.17.0 — Primera muestra de calles y viviendas en pendiente del Carmel
+
+- Tres vías principales y ocho calles locales del Carmel reciben perfiles de calzada y acera más estrechos; el resto de barrios conserva su anchura previa.
+- Las casas residenciales se elevan sobre la cota más alta de su huella y reciben zócalos de piedra cuando el terreno cae junto a la fachada.
+- Ajustados los límites laterales de coche y peatón para que respeten los nuevos perfiles sin bloquear accesos a las casas.
+- Añadidas pruebas de relieve, perfiles viales, colisiones, movilidad a pie y presupuesto de geometría. Prueba visual WebGL y conducción manual pendientes.
+
 ## v0.16.0 — Colisiones urbanas y fachadas del Carmel
 
 - Colisión barrida para la huella del coche, deslizamiento por fachadas y comprobación de edificios al caminar o salir del vehículo.

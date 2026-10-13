@@ -50,8 +50,10 @@ const streets=[
  [[-1090,-485],[-1075,-650]],
  [[-1300,-620],[-1420,-660],[-1510,-610]]
 ];
-export const CITY=Object.freeze({name:'EL CARMEL',year:1984,streets:Object.freeze(streets.map(s=>Object.freeze(s.map(p=>Object.freeze(p))))),bounds:1750,roadHalf:10.2,sidewalkHalf:14.2,viewpoint:[214,-122]});
+const streetProfiles=Object.freeze(streets.map((_,index)=>Object.freeze(index<3?{roadHalf:5.8,sidewalkHalf:8.1}:index<11?{roadHalf:4.6,sidewalkHalf:6.6}:null)));
+export const CITY=Object.freeze({name:'EL CARMEL',year:1984,streets:Object.freeze(streets.map(s=>Object.freeze(s.map(p=>Object.freeze(p))))),streetProfiles,bounds:1750,roadHalf:10.2,sidewalkHalf:14.2,viewpoint:[214,-122]});
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+export function streetProfile(index){return CITY.streetProfiles[index]||{roadHalf:CITY.roadHalf,sidewalkHalf:CITY.sidewalkHalf};}
 
 export function cityElevation(x,z){
  const hill=(cx,cz,amp,spread)=>amp*Math.exp(-((x-cx)**2+(z-cz)**2)/(2*spread*spread));
@@ -67,7 +69,7 @@ export function nearestStreet(x,z){
    const a=path[i],b=path[i+1],dx=b[0]-a[0],dz=b[1]-a[1],len2=dx*dx+dz*dz;
    const t=clamp(((x-a[0])*dx+(z-a[1])*dz)/len2,0,1),px=a[0]+dx*t,pz=a[1]+dz*t;
    const distance=Math.hypot(x-px,z-pz);
-   if(!best||distance<best.distance){const len=Math.sqrt(len2);best={distance,x:px,z:pz,tx:dx/len,tz:dz/len,nx:dz/len,nz:-dx/len,street:r,segment:i};}
+   if(!best||distance<best.distance){const len=Math.sqrt(len2);best={distance,x:px,z:pz,tx:dx/len,tz:dz/len,nx:dz/len,nz:-dx/len,street:r,segment:i,...streetProfile(r)};}
   }
  }
  return best;
@@ -109,12 +111,13 @@ function buildHillside(g){
 
 function buildStreets(g){
  const asphalt=[54,57,59],sidewalk=[157,150,133],curb=[202,187,157],paint=[217,203,175];
- for(const path of CITY.streets)for(let i=0;i<path.length-1;i++){
+ for(const [roadIndex,path] of CITY.streets.entries())for(let i=0;i<path.length-1;i++){
   const a=path[i],b=path[i+1],dx=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dx,dz),nx=dz/len,nz=-dx/len;
-  roadStrip(g,a,b,-CITY.roadHalf,CITY.roadHalf,asphalt);
+  const profile=streetProfile(roadIndex),{roadHalf,sidewalkHalf}=profile;
+  roadStrip(g,a,b,-roadHalf,roadHalf,asphalt);
   for(const side of [-1,1]){
-   roadStrip(g,a,b,side*CITY.roadHalf,side*CITY.sidewalkHalf,sidewalk);
-   roadStrip(g,a,b,side*(CITY.roadHalf-.14),side*(CITY.roadHalf+.18),curb);
+   roadStrip(g,a,b,side*roadHalf,side*sidewalkHalf,sidewalk);
+   roadStrip(g,a,b,side*(roadHalf-.14),side*(roadHalf+.18),curb);
   }
   // Short worn center dashes follow each climb instead of appearing as a flat grid.
   for(let d=8;d<len-7;d+=19){
@@ -123,13 +126,13 @@ function buildStreets(g){
   }
   // A raised retaining edge makes steep cuts in the slope readable.
   if(len>52&&i%2===0)for(const side of [-1,1]){
-   const t=.52,c=[a[0]+dx*t+nx*side*CITY.sidewalkHalf,a[1]+dz*t+nz*side*CITY.sidewalkHalf],h=2.2,y=cityElevation(c[0],c[1]);
+   const t=.52,c=[a[0]+dx*t+nx*side*sidewalkHalf,a[1]+dz*t+nz*side*sidewalkHalf],h=2.2,y=cityElevation(c[0],c[1]);
    g.box(c[0],y+h/2,c[1],.55,h,4.2,[119,112,99]);
   }
  }
  // Junction pads close the outer corner gaps where switchbacks meet.
  const junctions=new Set();for(const path of CITY.streets)for(const p of path)junctions.add(p[0]+','+p[1]);
- for(const key of junctions){const [x,z]=key.split(',').map(Number),r=10;surfaceQuad(g,[x-r,z-r],[x+r,z-r],[x+r,z+r],[x-r,z+r],asphalt,.25);}
+ for(const key of junctions){const [x,z]=key.split(',').map(Number),r=Math.max(6,nearestStreet(x,z).sidewalkHalf);surfaceQuad(g,[x-r,z-r],[x+r,z-r],[x+r,z+r],[x-r,z+r],asphalt,.25);}
 }
 
 
@@ -143,19 +146,20 @@ function buildRoadFinishes(g){
  for(const [roadIndex,path] of CITY.streets.entries())for(let i=0;i<path.length-1;i++){
   const a=path[i],b=path[i+1],dx=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dx,dz);
   if(len<17)continue;
-  const tx=dx/len,tz=dz/len,nx=tz,nz=-tx;
+  const tx=dx/len,tz=dz/len,nx=tz,nz=-tx,{roadHalf,sidewalkHalf}=streetProfile(roadIndex);
   // Rectángulos de distinto tamaño simulan reasfaltados y juntas sin texturas externas.
   const count=Math.floor((len-9)/41);
   for(let j=0;j<count;j++){
-   const mid=10+j*41+((roadIndex+i)%4)*3.2,half=3.8+(j%3)*1.3;
-   const side=((roadIndex+j+i)%2?1:-1),offset=side*5.7;
+   const mid=10+j*41+((roadIndex+i)%4)*3.2,half=Math.min(3.8+(j%3)*1.3,roadHalf*.38);
+   const side=((roadIndex+j+i)%2?1:-1),offset=side*roadHalf*.53;
    const p=(t,n)=>[a[0]+tx*t+nx*n,a[1]+tz*t+nz*n];
    surfaceQuad(g,p(mid-half,offset-2.25),p(mid+half,offset-2.25),p(mid+half,offset+2.25),p(mid-half,offset+2.25),patched[(roadIndex+j)%2],.285);
   }
   // Ligeras juntas de hormigón transversal en la acera; pequeñas para respetar la escala.
-  if(len>35)for(const side of [-1,1])for(let d=21;d<len-5;d+=29){
+  if(len>35&&sidewalkHalf-roadHalf>.5)for(const side of [-1,1])for(let d=21;d<len-5;d+=29){
    const p=(along,n)=>[a[0]+tx*along+nx*n,a[1]+tz*along+nz*n];
-   surfaceQuad(g,p(d,side*10.65),p(d+.1,side*10.65),p(d+.1,side*13.65),p(d,side*13.65),joint,.27);
+   const inner=roadHalf+.35,outer=sidewalkHalf-.3;
+   surfaceQuad(g,p(d,side*inner),p(d+.1,side*inner),p(d+.1,side*outer),p(d,side*outer),joint,.27);
   }
  }
  // Paso de peatones: franjas cortas sucesivas cruzando la calzada, fuera de los nudos.
@@ -172,10 +176,10 @@ function buildRoadFinishes(g){
 }
 
 function parcelTouchesStreet(x,z,w,d){
- // The carriageway plus a vehicle-width margin must never cross the house.
- const margin=CITY.roadHalf+2.2,minX=x-w/2-margin,maxX=x+w/2+margin;
- const minZ=z-d/2-margin,maxZ=z+d/2+margin;
- for(const path of CITY.streets)for(let i=1;i<path.length;i++){
+ // Keep each parcel clear of the locally sized carriageway and a vehicle margin.
+ for(const [roadIndex,path] of CITY.streets.entries())for(let i=1;i<path.length;i++){
+  const margin=streetProfile(roadIndex).roadHalf+2.2,minX=x-w/2-margin,maxX=x+w/2+margin;
+  const minZ=z-d/2-margin,maxZ=z+d/2+margin;
   const [ax,az]=path[i-1],[bx,bz]=path[i],dx=bx-ax,dz=bz-az;
   let lo=0,hi=1,miss=false;
   for(const [p,v,min,max] of [[ax,dx,minX,maxX],[az,dz,minZ,maxZ]]){
@@ -232,6 +236,37 @@ function buildCarmelHouseFront(g,x,z,w,d,h,y,index){
  }
 }
 
+export function terrainHeightForFootprint(x,z,w,d){
+ let highest=-Infinity;
+ for(const [length,point] of [[w,t=>[x-w/2+t*w,z-d/2]],[w,t=>[x-w/2+t*w,z+d/2]],
+  [d,t=>[x-w/2,z-d/2+t*d]],[d,t=>[x+w/2,z-d/2+t*d]]]){
+  const steps=Math.max(2,Math.ceil(length/3));
+  for(let i=0;i<=steps;i++)highest=Math.max(highest,cityElevation(...point(i/steps)));
+ }
+ return highest+.08;
+}
+
+function buildHouseFoundation(g,x,z,w,d,base,index){
+ const edges=[
+  {length:w,point:t=>[x-w/2+t*w,z+d/2+.15]},
+  {length:w,point:t=>[x+w/2-t*w,z-d/2-.15]},
+  {length:d,point:t=>[x+w/2+.15,z-d/2+t*d]},
+  {length:d,point:t=>[x-w/2-.15,z+d/2-t*d]}
+ ];
+ const stones=[[133,119,99],[145,129,106],[121,111,96]];
+ for(const [edgeIndex,edge] of edges.entries()){
+  const steps=Math.max(1,Math.ceil(edge.length/3.5));
+  for(let i=0;i<steps;i++){
+   const [x1,z1]=edge.point(i/steps),[x2,z2]=edge.point((i+1)/steps);
+   const y1=cityElevation(x1,z1)+.03,y2=cityElevation(x2,z2)+.03;
+   if(base-Math.min(y1,y2)<.75)continue;
+   const bottomA=[x1,y1,z1],bottomB=[x2,y2,z2],topB=[x2,base,z2],topA=[x1,base,z1];
+   const color=stones[(index+edgeIndex+i)%stones.length];
+   g.quad(bottomA,bottomB,topB,topA,color);
+  }
+ }
+}
+
 function buildHousing(g){
  let seed=1984;const rnd=()=>{seed=(Math.imul(1664525,seed)+1013904223)>>>0;return seed/4294967296;};
  let featured=0;
@@ -250,7 +285,8 @@ function buildHousing(g){
    const selfBuilt=upper&&k===count-1&&iz%2===0;
    const w=selfBuilt?17:count===3?23:28,d=selfBuilt?18:count===3?25:31;
    const parcel=safeParcel(x,z,w,d,occupied);if(!parcel)continue;
-   [x,z]=parcel;const ground=cityElevation(x,z);
+   [x,z]=parcel;const ground=terrainHeightForFootprint(x,z,w,d);
+   buildHouseFoundation(g,x,z,w,d,ground,ix*36+iz*3+k);
    const h=selfBuilt?3.8:dense?13+rnd()*13:9+rnd()*18;
    const pal=palette[Math.floor(rnd()*palette.length)];
    boxAt(g,x,z,w,h-.55,d,pal.wall,ground);boxAt(g,x, z,w+.7,.45,d+.7,selfBuilt?[91,80,68]:pal.roof,ground+h-.65);
