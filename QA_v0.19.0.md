@@ -14,9 +14,12 @@
 - Antes y después, los **124 colisionadores** de edificios son idénticos en datos y orden.
 - `tests/district-corridors-019.test.js` comprueba el presupuesto, ambos distritos y normales hacia ambos lados.
 
+## CI de GitHub
+
+- [Static QA de la rama](https://github.com/ivan7800/CHASE-404/actions/runs/38431318992): PASS. `npm run audit` (413/413 pruebas, 6/6 GLB, auditoría estática, release y site gates); `python3 tools/first_run_check.py` (7/7); `npm run acceptance:gate` (18/18, estado `PENDING_MANUAL_ACCEPTANCE`).
+
 ## Por comprobar
 
-- CI de rama: `npm run audit`, `python3 tools/first_run_check.py`, `npm run acceptance:gate`.
 - Aspecto de las fachadas y zócalos en un navegador con WebGL, colisiones al acercarse y FPS en escritorio y móvil.
 - Campaña completa, ambos finales y sesión prolongada.
 

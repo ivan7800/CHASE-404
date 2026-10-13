@@ -2,7 +2,7 @@
 
 La ciudad usa 374.409 vértices frente a 396.975 en v0.18.0. Se añaden detalles de calle a tres fachadas de Gràcia y tres del Guinardó. El conjunto de colisionadores de edificios conserva 124 elementos y las posiciones de cada uno.
 
-**Evidencia de esta fase:** [QA_v0.19.0.md](QA_v0.19.0.md) y el flujo [Static QA](https://github.com/ivan7800/CHASE-404/actions/workflows/quality.yml). La CI de 0.19.0 aún debe finalizar antes de marcarla aprobada.
+**Evidencia de esta fase:** [QA_v0.19.0.md](QA_v0.19.0.md) y el flujo [Static QA](https://github.com/ivan7800/CHASE-404/actions/workflows/quality.yml). La [CI de la rama](https://github.com/ivan7800/CHASE-404/actions/runs/38431318992) terminó correctamente: 413/413 pruebas, 6/6 GLB, arranque HTTP 7/7, auditoría estática y aceptación técnica 18/18.
 
 **Aceptación jugable:** pendiente. [ACEPTACION_MANUAL.md](ACEPTACION_MANUAL.md) enumera las pruebas en WebGL, campaña completa, ambos desenlaces, sonido, móvil, guardado y rendimiento. Los controles automáticos verifican código y recursos; no certifican una partida real.
 

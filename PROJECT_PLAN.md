@@ -11,7 +11,7 @@ La campaña de 15 misiones, dos desenlaces, tres encargos y exploración están 
 - [x] Sustituir caras ocultas de cristales lejanos y fachadas por planos con normales hacia la calle.
 - [x] Dar tratamiento propio a tres fachadas de Gràcia y tres del Guinardó sin añadir edificios ni colisionadores.
 - [x] Actualizar README, estado QA, plan y guía de publicación.
-- [ ] Confirmar `npm run audit`, `python3 tools/first_run_check.py` y `npm run acceptance:gate` en la CI de la rama.
+- [x] CI en la rama: 413/413 pruebas, 6/6 GLB, auditoría estática, arranque HTTP 7/7 y aceptación técnica 18/18. [Evidencia](https://github.com/ivan7800/CHASE-404/actions/runs/38431318992).
 - [ ] Comprobar la nueva escena con WebGL real, a pie y conduciendo; medir FPS en escritorio y móvil.
 
 **Presupuesto medido en la malla de ciudad:** 374.409 vértices; límite de regresión: 400.000. La cifra no representa FPS: hay que medirlos en hardware real.
@@ -26,8 +26,8 @@ La campaña de 15 misiones, dos desenlaces, tres encargos y exploración están 
 
 | Control | Estado |
 | --- | --- |
-| CI: sintaxis, pruebas, seis GLB, auditoría estática, release y Pages | Pendiente del flujo de 0.19.0; revisar [Actions](https://github.com/ivan7800/CHASE-404/actions) |
-| Aceptación técnica | Ejecutar `npm run audit && npm run acceptance:gate` para 0.19.0 |
+| CI: sintaxis, 413 pruebas, seis GLB, auditoría estática y preparación de Pages | PASS en [Static QA](https://github.com/ivan7800/CHASE-404/actions/runs/38431318992) |
+| Aceptación técnica | PASS 18/18; aceptación jugable PENDIENTE |
 | Publicación | Sitio de GitHub Pages existente; confirmar la versión visible después del despliegue |
 | Aceptación manual de juego | Pendiente; sigue ALPHA |
 
