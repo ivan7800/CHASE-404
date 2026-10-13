@@ -1,4 +1,4 @@
-# CHASE 404 · Fase 10.4 · Acta de aceptación manual
+# CHASE 404 · v0.19.0 · Acta de aceptación manual
 
 **Estado: PENDIENTE.** Este documento no certifica una versión final. Completarlo con fecha, sistema, navegador, resultados y evidencias reales de cada sesión.
 
@@ -19,4 +19,4 @@
 
 **Criterio de salida:** todas las filas aprobadas o cada excepción explícitamente documentada y aceptada, sin bloqueantes. Ejecutar `npm run audit`, `python3 tools/first_run_check.py`, `npm run acceptance:gate`. Ninguna prueba automática sustituye las pruebas jugables de A01–A12.
 
-**Incidencias abiertas:** prueba gráfica y auditiva real, dos finales, rendimiento en equipos reales y despliegue en GitHub Pages. No se ha autorizado publicar automáticamente.
+**Incidencias abiertas:** prueba gráfica y auditiva real, dos finales y rendimiento en equipos reales. GitHub Pages está publicado; falta completar la prueba jugable A12 con la versión actual.

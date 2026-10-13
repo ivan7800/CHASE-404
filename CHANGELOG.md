@@ -1,3 +1,10 @@
+## v0.19.0 — Geometría y personalidad de los barrios
+
+- Convertidos en planos los cristales de fachadas de Gràcia, Guinardó y Eixample y de viviendas alejadas de calles, con normales hacia el exterior.
+- Añadidos dos corredores de tres fachadas en Gràcia y Guinardó, con zócalos y detalles específicos.
+- Ciudad de 396.975 a 374.409 vértices; permanecen idénticos los 124 colisionadores de edificios.
+- Actualizados plan vigente, estado QA, acta manual y guía de Pages. WebGL real, campaña completa y FPS siguen pendientes.
+
 ## v0.18.0 — Recorrido piloto del Carmel
 
 - Tres manzanas contiguas reciben balcones y una fachada comercial con toldo y rótulo.
