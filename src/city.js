@@ -104,6 +104,14 @@ function roadStrip(g,a,b,lo,hi,color){
  }
 }
 function boxAt(g,x,z,w,h,d,color,ground=cityElevation(x,z)){g.box(x,ground+h/2,z,w,h,d,color);}
+// Glazing lies on an opaque wall. One outward-facing quad keeps the same
+// street-facing silhouette and lighting normal without five hidden faces.
+function facadePane(g,x,y,z,span,height,axis,side,color){
+ const a=axis==='x'?[x,y-height/2,z+span/2]:[x-span/2,y-height/2,z];
+ const b=axis==='x'?[x,y-height/2,z-span/2]:[x+span/2,y-height/2,z];
+ const c=[b[0],y+height/2,b[2]],d=[a[0],y+height/2,a[2]];
+ if(side<0)g.quad(b,a,d,c,color);else g.quad(a,b,c,d,color);
+}
 
 function buildHillside(g){
  const ground=[88,104,76],stone=[127,119,100];
@@ -337,7 +345,7 @@ function buildHousing(g){
    const selfBuilt=upper&&k===count-1&&iz%2===0;
    const w=selfBuilt?17:count===3?23:28,d=selfBuilt?18:count===3?25:31;
    const parcel=safeParcel(x,z,w,d,occupied);if(!parcel)continue;
-   [x,z]=parcel;const ground=terrainHeightForFootprint(x,z,w,d);
+   [x,z]=parcel;const ground=terrainHeightForFootprint(x,z,w,d),streetDistance=nearestStreet(x,z).distance;
    buildHouseFoundation(g,x,z,w,d,ground,ix*36+iz*3+k);
    const h=selfBuilt?3.8:dense?13+rnd()*13:9+rnd()*18;
    const pal=palette[Math.floor(rnd()*palette.length)];
@@ -346,7 +354,10 @@ function buildHousing(g){
     const floors=Math.max(2,Math.floor(h/4)),colsWin=Math.max(2,Math.floor(w/9));
     for(let fy=0;fy<floors;fy++)for(let c=0;c<colsWin;c++){
      const wy=ground+1.0+fy*3.25,wx=x-w*.32+c*(w*.64/Math.max(1,colsWin-1)),glass=rnd()>.84?[207,166,92]:[47,66,75];
-     g.box(wx,wy,z+d/2+.08,2.1,1.45,.12,glass);g.box(x+w/2+.08,wy,z-d*.32+c*(d*.64/Math.max(1,colsWin-1)),.12,1.45,2.1,glass);
+     // Homes well away from the drivable streets have planar glazing;
+     // nearby houses keep their shallow glass volume at camera distance.
+     if(streetDistance>42){facadePane(g,wx,wy,z+d/2+.08,2.1,1.45,'z',1,glass);facadePane(g,x+w/2+.08,wy,z-d*.32+c*(d*.64/Math.max(1,colsWin-1)),2.1,1.45,'x',1,glass);}
+     else{g.box(wx,wy,z+d/2+.08,2.1,1.45,.12,glass);g.box(x+w/2+.08,wy,z-d*.32+c*(d*.64/Math.max(1,colsWin-1)),.12,1.45,2.1,glass);}
     }
     boxAt(g,x, z-d/2-.16,w*.92,.35,.28,[218,199,166],ground+h*.62);
    }else{
@@ -355,7 +366,7 @@ function buildHousing(g){
    }
    // Small balconies and shop awnings give the lower streets an inhabited 1980s scale.
    if(!upper&&k===0){g.box(x,ground+2.4,z+d/2+.5,w*.62,.22,.9,[113,87,62]);g.box(x,ground+3.3,z+d/2+.85,w*.62,1.4,.14,[59,78,82]);}
-   if(!selfBuilt&&featured<50&&nearestStreet(x,z).distance<42)
+   if(!selfBuilt&&featured<50&&streetDistance<42)
     buildCarmelHouseFront(g,x,z,w,d,h,ground,featured++);
    const pilotBlock=ix===5&&iz>=3&&iz<=5;
    if(pilotBlock&&!selfBuilt)buildPilotBalcony(g,x,z,w,d,h,ground,ix*36+iz*3+k);
@@ -485,7 +496,7 @@ function buildGuinardoGateway(g){
   // Recessed rhythmic windows, balcony slabs and iron railings.
   for(let floor=0;floor<3;floor++)for(const dx of [-w*.28,w*.28]){
    const wy=y+3.4+floor*4.4;
-   g.box(x+dx,wy,z+8.07,2.2,2.5,.11,[67,90,97]);
+   facadePane(g,x+dx,wy,z+8.07,2.2,2.5,'z',1,[67,90,97]);
    g.box(x+dx,wy-1.37,z+8.65,3.4,.2,1.5,[151,139,124]);
    g.box(x+dx,wy-.6,z+9.34,3.3,1.1,.09,[66,70,67]);
   }
@@ -510,7 +521,7 @@ function buildGraciaGateway(g){
   g.box(x,y+h+.4,z,w+1,.8,d+1,[109,91,82]);
   for(let level=0;level<3;level++)for(const dx of [-w*.3,0,w*.3]){
    const wy=y+4+level*4;
-   g.box(x+dx,wy,z+d/2+.07,1.8,2.5,.12,[56,77,83]);
+   facadePane(g,x+dx,wy,z+d/2+.07,1.8,2.5,'z',1,[56,77,83]);
    g.box(x+dx,wy-1.4,z+d/2+.67,2.8,.18,1.2,[161,148,130]);
    g.box(x+dx,wy-.68,z+d/2+1.21,2.8,.95,.1,[72,75,73]);
   }
@@ -537,7 +548,7 @@ function buildEixampleGateway(g){
   g.box(x,y+h+.45,z,40,.9,39,[111,99,90]);
   for(const side of [-1,1])for(let floor=0;floor<4;floor++)for(let n=0;n<4;n++){
    const bx=x-14+n*9.1,by=y+4+floor*4.8;
-   g.box(bx,by,z+side*19.09,2.8,2.7,.15,[58,75,80]);
+   facadePane(g,bx,by,z+side*19.09,2.8,2.7,'z',side,[58,75,80]);
    g.box(bx,by-1.47,z+side*19.65,3.7,.2,1.25,[158,151,135]);
    g.box(bx,by-.79,z+side*20.22,3.7,1,.12,[73,78,77]);
   }
@@ -1231,8 +1242,43 @@ function buildCarmelVisualPass1123(g){
  });
 }
 
+// Two short street-facing sequences distinguish Gràcia's tiled shopfronts
+// from Guinardó's workshop bases. All details sit on existing walls.
+export const DISTRICT_CORRIDORS_019=Object.freeze({
+ gracia:Object.freeze([[-346,8],[-394,24],[-473,36]].map(p=>Object.freeze(p))),
+ guinardo:Object.freeze([[-110,331,2],[-10,342,4],[15,408,5]].map(p=>Object.freeze(p)))
+});
+function buildDistrictCorridors019(g){
+ for(const [i,[x,z]] of DISTRICT_CORRIDORS_019.gracia.entries()){
+  const y=cityElevation(x,z),w=22+(i%3)*4,front=z+9;
+  g.box(x,y+.63,front+.22,w-2,1.2,.30,[137,110,89]);
+  for(const side of [-1,1]){
+   g.box(x+side*(w/2-1.3),y+2.55,front+.27,.30,3.8,.35,[171,142,112]);
+   g.box(x+side*(w*.30),y+8,front+.23,1.05,2.4,.15,[122,91,71]);
+  }
+  if(i===1){
+   g.box(x,y+2,front+.22,7.1,3.2,.18,[72,88,83]);
+   g.box(x,y+3.85,front+.38,8.4,.55,.24,[171,123,87]);
+   for(let stripe=0;stripe<5;stripe++)
+    g.box(x-3.36+stripe*1.68,y+3.45,1.02+front,1.6,.13,1.15,stripe%2?[191,173,136]:[112,132,115]);
+  }
+ }
+ for(const [i,[x,z,source]] of DISTRICT_CORRIDORS_019.guinardo.entries()){
+  const y=cityElevation(x,z),w=16+(source%2)*6,front=z+8;
+  g.box(x,y+.68,front+.19,w-1.9,1.3,.27,[116,96,82]);
+  for(const side of [-1,1]){
+   g.box(x+side*(w/2-1),y+2.9,front+.25,.38,4.6,.34,[99,105,101]);
+   g.box(x+side*(w*.28),y+8.1,front+.20,1,2.05,.14,[128,113,94]);
+  }
+  if(i===1){
+   g.box(x,y+2.2,front+.22,6.6,3.6,.16,[82,97,101]);
+   g.box(x,y+4.24,front+.30,7.4,.4,.24,[178,139,94]);
+  }
+ }
+}
+
 export function buildCity(){
- const g=new Builder();buildHillside(g);buildStreets(g);buildRoadFinishes(g);buildHousing(g);buildNeighborhoodDetails(g);buildCarmelWorkshop(g);buildVerenneGarage(g);buildPeriodStreetscape(g);buildViewpoint(g);buildGuinardoGateway(g);buildGraciaGateway(g);buildEixampleGateway(g);buildPortGateway(g);buildMontjuicGateway(g);buildFacadeFinishes(g);buildCarmelGraciaArtPass(g);buildStreetArt113(g);buildAmbient114(g);buildArchitecturalPass117(g);buildFacadeMaterials118(g);buildRooftopSilhouettes1119(g);buildCarmelPanorama1120(g);buildDistrictIdentity1121(g);buildStreetLevelArt1122(g);buildCarmelVisualPass1123(g);buildStreetDetails119(g);buildSecretMarkers(g);buildContactFigures(g);return g.finish();
+ const g=new Builder();buildHillside(g);buildStreets(g);buildRoadFinishes(g);buildHousing(g);buildNeighborhoodDetails(g);buildCarmelWorkshop(g);buildVerenneGarage(g);buildPeriodStreetscape(g);buildViewpoint(g);buildGuinardoGateway(g);buildGraciaGateway(g);buildEixampleGateway(g);buildPortGateway(g);buildMontjuicGateway(g);buildFacadeFinishes(g);buildCarmelGraciaArtPass(g);buildStreetArt113(g);buildAmbient114(g);buildArchitecturalPass117(g);buildFacadeMaterials118(g);buildRooftopSilhouettes1119(g);buildCarmelPanorama1120(g);buildDistrictIdentity1121(g);buildStreetLevelArt1122(g);buildCarmelVisualPass1123(g);buildDistrictCorridors019(g);buildStreetDetails119(g);buildSecretMarkers(g);buildContactFigures(g);return g.finish();
 }
 
 // Capture the structural boxes through the same authored builders that draw

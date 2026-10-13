@@ -1,23 +1,17 @@
-# Publicar CHASE 404 en GitHub Pages (manual)
+# CHASE 404 en GitHub Pages
 
-**No se ha publicado desde esta entrega.** La automatización de despliegue solamente se inicia manualmente desde GitHub Actions.
+**Repositorio:** [ivan7800/CHASE-404](https://github.com/ivan7800/CHASE-404/)  
+**Juego publicado:** [ivan7800.github.io/CHASE-404](https://ivan7800.github.io/CHASE-404/)
 
-**Estado 0.14.7:** alpha para pruebas. Las correcciones de progreso pasan pruebas automatizadas, pero falta validar en navegador real la campaña, los dos finales, WebGL, rendimiento y controles. El workflow técnico no certifica esas pruebas jugables.
+La app se sirve bajo `/CHASE-404/`. Usa rutas relativas para HTML, módulos y modelos. Sigue en **ALPHA**: el despliegue comprueba que se publica el sitio, pero las partidas completas y el rendimiento requieren la [aceptación manual](ACEPTACION_MANUAL.md).
 
-1. Crea un repositorio público, por ejemplo `CHASE-404`, o utiliza uno propio.
-2. Sube **los contenidos de `CHASE-404/` a la raíz** (no subas una segunda carpeta `CHASE-404` anidada). Comprueba que `index.html`, `src/`, `styles/`, `assets/`, `.github/` y `.nojekyll` estén en la raíz.
-3. Ve a **Settings → Pages → Build and deployment** y elige **GitHub Actions** como origen.
-4. Espera a que termine la acción `Static QA` y verifica que pasa.
-5. Ve a **Actions → Deploy GitHub Pages → Run workflow** en la rama principal y ejecuta manualmente.
-6. Comprueba `https://<usuario>.github.io/<nombre-repo>/`. Una publicación bajo subdirectorio usa rutas relativas.
-7. Realiza una prueba de humo: carga de modelos, arranque, conducción, bajar del coche, menús, sonido voluntario y progreso tras refrescar.
+## Publicar una actualización
 
-**Límites:** QA automatizada no sustituye una sesión completa jugando. No se habilita un trigger `push` para desplegar. Si se cambia el nombre de la rama principal, selecciona esa rama al ejecutar el flujo.
+1. Integra en `main` el cambio tras pasar `Static QA`. Este flujo ejecuta `npm run audit`, una prueba de arranque HTTP y `npm run acceptance:gate`.
+2. Consulta **Actions** y confirma que `pages build and deployment` termina correctamente para el commit de `main`. GitHub ha iniciado ese despliegue del sitio al actualizar `main`.
+3. Si no aparece el despliegue, ejecuta **Actions → Deploy GitHub Pages → Run workflow** en `main`. El flujo `.github/workflows/deploy-pages.yml` conserva el disparador manual `workflow_dispatch`.
+4. Abre el enlace público, confirma la versión del HUD y prueba carga de modelos, arranque, conducción, caminar, menús y progreso tras refrescar.
 
-Para jugar sin publicarlo, ejecuta los lanzadores locales que usan Python 3.
+Para una preparación local, ejecuta `npm run audit`, `python3 tools/first_run_check.py` y `npm run acceptance:gate` con Node 22+ y Python 3. `npm run site:prepare` genera `_site/` con los recursos publicables; esa carpeta se regenera y no debe subirse al repositorio.
 
-## Comprobación previa a la publicación (10.3)
-
-Ejecuta `npm run audit` y `python3 tools/first_run_check.py`. `npm run site:prepare` crea `_site/` exclusivamente con `index.html`, `.nojekyll`, `assets/`, `src/` y `styles/`; si faltan dependencias locales, el proceso falla. El workflow utiliza exactamente esa carpeta. `_site/` se genera de nuevo y no debe incorporarse al ZIP del proyecto ni al repositorio.
-
-Esta comprobación **no** sustituye las partidas completas, pruebas visuales, móviles, FPS ni ambas rutas finales.
+La prueba estática y GitHub Pages no sustituyen WebGL, sonido, controles táctiles, FPS ni una partida completa con ambos finales.

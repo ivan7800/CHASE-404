@@ -1,6 +1,6 @@
 # CHASE 404 — Barcelona 1984
 
-**Versión 0.18.0 ALPHA · Recorrido piloto del Carmel.** Tres manzanas reúnen viviendas con balcones, una fachada comercial y una bajada peatonal con barandillas; las calles del barrio tienen calzadas y aceras más estrechas, y las casas en pendiente se asientan con zócalos de piedra. Se conservan colisiones para coche y peatón. La revisión visual en WebGL, conducción real y FPS siguen pendientes de prueba manual.
+**Versión 0.19.0 ALPHA · Barrios y geometría.** El recorrido piloto del Carmel conserva tres manzanas con balcones, un comercio y una bajada peatonal; Gràcia y el Guinardó reciben frentes de calle diferenciados. La malla urbana baja de 396.975 a 374.409 vértices sin alterar los colisionadores de edificios. Se conservan colisiones para coche y peatón. La revisión visual en WebGL, conducción real y FPS siguen pendientes de prueba manual.
 
 Videojuego original de conducción arcade ambientado en una Barcelona ficticia y condensada de 1984. Incluye 15 misiones principales, dos desenlaces, tres encargos secundarios, exploración libre, seis modelos de coches, taller, garaje, secretos y personajes con historias secundarias. Se ejecuta en el navegador con WebGL y archivos locales; no requiere cuenta, servidor remoto ni servicios externos.
 
@@ -33,7 +33,7 @@ También hay botones táctiles. La conducción y el desplazamiento a pie tienen 
 
 ## Publicación en GitHub Pages
 
-Consulta **[PUBLISH_GITHUB_PAGES.md](PUBLISH_GITHUB_PAGES.md)**. La publicación está configurada como **manual** (`workflow_dispatch`); no se activa al subir archivos. Debes crear el repositorio, colocar los contenidos de esta carpeta en su raíz, activar GitHub Pages con origen **GitHub Actions** y ejecutar el flujo «Deploy GitHub Pages» desde Actions. Para un repositorio `CHASE-404`, la ruta sería `https://<usuario>.github.io/CHASE-404/`. Las rutas del proyecto son relativas, compatibles con ese subdirectorio.
+El juego está publicado en **[GitHub Pages](https://ivan7800.github.io/CHASE-404/)**. Para comprobar una actualización de `main`, el despliegue y la versión visible, consulta **[PUBLISH_GITHUB_PAGES.md](PUBLISH_GITHUB_PAGES.md)**. Las rutas relativas son compatibles con `/CHASE-404/`.
 
 ## Seguridad, datos y límites
 
@@ -41,7 +41,7 @@ Los ajustes y avances se almacenan en `localStorage` del navegador. Borrar datos
 
 ## Verificación y estado
 
-La muestra de calles y cimentaciones del Carmel y sus verificaciones se documentan en [QA_v0.18.0.md](QA_v0.18.0.md). La fase anterior se documenta en [QA_v0.17.0.md](QA_v0.17.0.md). Las colisiones y el remate urbano anterior se describen en [QA_v0.16.0.md](QA_v0.16.0.md).
+La geometría y los nuevos corredores urbanos se documentan en [QA_v0.19.0.md](QA_v0.19.0.md). La muestra anterior del Carmel está en [QA_v0.18.0.md](QA_v0.18.0.md). La fase anterior se documenta en [QA_v0.17.0.md](QA_v0.17.0.md). Las colisiones y el remate urbano anterior se describen en [QA_v0.16.0.md](QA_v0.16.0.md).
 
 - `npm run audit`: sintaxis, tests, assets, conexiones estáticas de UI y puerta de distribución.
 - `npm run release:gate`: presencia de recursos, consistencia de versión y archivos de publicación.
