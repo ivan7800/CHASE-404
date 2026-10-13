@@ -1,6 +1,6 @@
 # CHASE 404 — Barcelona 1984
 
-**Versión 0.15.0 ALPHA · Primera pasada visual de El Carmel.** Añade relieve y variedad a ocho fachadas residenciales y tres pequeños comercios ficticios de 1984. Conserva las correcciones de campaña de v0.14.7. La revisión visual en WebGL y los FPS siguen pendientes de prueba manual.
+**Versión 0.16.0 ALPHA · Ciudad jugable.** Los edificios principales tienen colisión para coche y peatón, las parcelas residenciales dejan libres las calles y unas cincuenta casas reciben fachadas orientadas hacia el vial. El terreno distante usa menos geometría. La revisión visual en WebGL y los FPS siguen pendientes de prueba manual.
 
 Videojuego original de conducción arcade ambientado en una Barcelona ficticia y condensada de 1984. Incluye 15 misiones principales, dos desenlaces, tres encargos secundarios, exploración libre, seis modelos de coches, taller, garaje, secretos y personajes con historias secundarias. Se ejecuta en el navegador con WebGL y archivos locales; no requiere cuenta, servidor remoto ni servicios externos.
 
@@ -41,11 +41,11 @@ Los ajustes y avances se almacenan en `localStorage` del navegador. Borrar datos
 
 ## Verificación y estado
 
-La fase visual 11.23 se documenta en [docs/FASE_11_23_EL_CARMEL.md](docs/FASE_11_23_EL_CARMEL.md) y sus límites de prueba en [QA_v0.15.0.md](QA_v0.15.0.md). El arte nuevo aún requiere revisión en navegador con WebGL.
+Las colisiones y el remate urbano de esta versión se documentan en [QA_v0.16.0.md](QA_v0.16.0.md). La fase visual anterior se describe en [docs/FASE_11_23_EL_CARMEL.md](docs/FASE_11_23_EL_CARMEL.md).
 
 - `npm run audit`: sintaxis, tests, assets, conexiones estáticas de UI y puerta de distribución.
 - `npm run release:gate`: presencia de recursos, consistencia de versión y archivos de publicación.
-- `npm run site:prepare`: genera `_site/` con los 66 archivos publicables y verifica rutas, imports y ausencia de herramientas de desarrollo.
+- `npm run site:prepare`: genera `_site/` y verifica rutas, imports y ausencia de herramientas de desarrollo.
 - Los controles marcados como «conectados» en el auditor estático no equivalen a botones pulsados con navegador real.
 - **Pendiente:** campaña completa con ambas ramas, juego móvil, WebGL y sonido reales, FPS y sesiones prolongadas.
 
