@@ -271,3 +271,17 @@
  .app[data-world="urban"] .progression{display:none}
  .objective-announcement{top:70px}
 }
+
+#streetJobBtn {
+ display:block;
+ width:100%;
+ margin-top:.45rem;
+ padding:.55rem .4rem;
+ border:1px solid #75d7ff;
+ border-radius:4px;
+ background:#14313d;
+ color:#d3f2ff;
+ cursor:pointer;
+ font:600 .78rem system-ui,sans-serif;
+}
+#streetJobBtn:focus-visible {outline:2px solid #fff;outline-offset:2px}
