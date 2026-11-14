@@ -1,3 +1,9 @@
+## v0.22.0 — Calles en movimiento
+
+- Peatones animados en aceras y tráfico repartido por los barrios.
+- Tres encargos del modo libre con entrega a contrarreloj, carga frágil y transporte de un vecino.
+- Las patrullas frenan en giros, respetan fachadas y buscan desde la última posición conocida. El HUD avisa de cuánto falta para perderlas.
+
 ## v0.21.0 — El turno de noche
 
 - Nuevas introducciones, escenas y consecuencias para la campaña de Gael y Pau.

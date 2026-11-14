@@ -1,3 +1,4 @@
+import { STREET_JOBS } from './street-life.js';
 import { resolveCityBuildingMove } from './urban-buildings.js';
 /** Adapted from the local WebGL approach in EIFFEL-404; original camera, shaders and assets. */
 import {buildTrack,buildCar,buildWheel,buildCarShadow,Builder} from './geometry.js';
@@ -150,6 +151,20 @@ export class Renderer{
    head.box(0,.53,.02,.65,.16,.59,actor.id==='clara'?[49,50,55]:[58,44,33]);
    return [actor.id,{body:this.upload(body.finish()),arm:this.upload(arm.finish()),head:this.upload(head.finish())}];
   }));
+  this.streetPedestrians=[];
+  this.streetJobMarkers=false;
+  const jobMarker=new Builder();
+  jobMarker.box(0,.07,0,3.4,.14,.55,[92,208,240]);
+  jobMarker.box(0,.07,0,.55,.14,3.4,[92,208,240]);
+  this.streetJobMarker=this.upload(jobMarker.finish());
+  this.residentMeshes=[[142,91,58],[77,105,111],[124,69,82]].map(coat=>{
+   const body=new Builder(),head=new Builder(),arm=new Builder(),leg=new Builder();
+   body.taperedBox(0,1.57,0,[.64,.39],[.52,.34],.71,coat);
+   head.box(0,.10,0,.39,.47,.37,[187,139,103]);head.box(0,.31,0,.42,.11,.40,[58,43,35]);
+   arm.box(0,-.26,0,.18,.52,.21,coat);
+   leg.box(0,-.38,0,.21,.76,.23,[57,60,62]);leg.box(0,-.75,.06,.22,.15,.34,[34,35,36]);
+   return {body:this.upload(body.finish()),head:this.upload(head.finish()),arm:this.upload(arm.finish()),leg:this.upload(leg.finish())};
+  });
   this.storyActors=[];
   this.signalMeshes={};for(const [name,color] of Object.entries({green:[71,220,120],amber:[250,180,55],red:[245,72,58]})){const g=new Builder();g.box(0,2.65,0,.36,5.3,.36,[84,91,91]);g.box(0,5.2,0,.96,1.65,.7,[32,38,41]);for(const [i,c] of [[0,[245,72,58]],[1,[250,180,55]],[2,[71,220,120]]])g.box(0,5.72-i*.53,.4,.49,.38,.12,i===({red:0,amber:1,green:2}[name])?color:[52,55,56]);this.signalMeshes[name]=this.upload(g.finish());}
   this.shadow=this.upload(buildCarShadow());this.wheel=this.upload(buildWheel());this.dust=this.upload(makeDustMesh());this.effects=new DrivingEffects();
@@ -261,6 +276,21 @@ export class Renderer{
      const shoulder=multiply(base,transform(side*.61,2.38,0));
      this.draw(actor.arm,multiply(shoulder,spinX(side<0?pose.leftArm:pose.rightArm)),vp);
     }
+   }
+  }
+  if(this.urban&&this.streetJobMarkers)for(const {start} of STREET_JOBS){
+   if((start.x-car.x)**2+(start.z-car.z)**2>110*110)continue;
+   this.draw(this.streetJobMarker,transform(start.x,cityElevation(start.x,start.z),start.z,Math.PI/4),vp);
+  }
+  if(this.urban)for(const actor of this.streetPedestrians){
+   const mesh=this.residentMeshes[actor.variant];
+   const stride=this.reducedMotion?0:Math.sin((this.urbanTime||0)*5.8+actor.variant)*.48;
+   const base=transform(actor.x,cityElevation(actor.x,actor.z),actor.z,actor.yaw);
+   this.draw(mesh.body,base,vp);
+   this.draw(mesh.head,multiply(base,transform(0,2,0)),vp);
+   for(const side of [-1,1]){
+    this.draw(mesh.arm,multiply(base,multiply(transform(side*.4,1.83,0),spinX(-side*stride*.55))),vp);
+    this.draw(mesh.leg,multiply(base,multiply(transform(side*.16,.88,0),spinX(side*stride))),vp);
    }
   }
   if(this.urban)for(const actor of this.storyActors||[]){

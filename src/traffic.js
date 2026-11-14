@@ -30,7 +30,7 @@ export function sampleTrafficRoute(route,distance){
 }
 export function createTraffic(count=7){
  return Array.from({length:Math.max(0,Math.min(12,Math.floor(count)))},(_,index)=>{
-  const route=makeRoute((index*3+1)%CITY.streets.length);
+  const route=makeRoute([1,4,7,11,15,17,19,21,23,27,30,34][index]);
   return {index,vehicleId:CARS[(index+1)%CARS.length].id,route,distance:(index*.173*route.length)%Math.max(1,route.length*2),speed:8+(index%4)*1.4,currentSpeed:0,braking:false,wheel:0,...sampleTrafficRoute(route,index*.173*route.length)};
  });
 }
@@ -47,7 +47,7 @@ export function stepTraffic(vehicles,dt,player,elapsed=0){
   // At route ends, odd-index vehicles yield momentarily to opposing flows.
   const routeDistance=((v.distance%(v.route.length*2))+(v.route.length*2))%(v.route.length*2);
   const atJunction=Math.min(routeDistance,Math.abs(routeDistance-v.route.length),v.route.length*2-routeDistance)<5;
-  const yielding=atJunction&&v.index%3===1;
+  const yielding=atJunction&&v.index%3===1&&(elapsed+v.index)%5<1.1;
   v.braking=Boolean(nearPlayer||nearCar||yielding||mustYieldSignal(v,elapsed));
   const target=v.braking?0:v.speed;
   v.currentSpeed=nearPlayer?0:clamp(v.currentSpeed+clamp(target-v.currentSpeed,-delta*24,delta*12),0,v.speed);

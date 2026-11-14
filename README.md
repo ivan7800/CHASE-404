@@ -1,6 +1,6 @@
 # CHASE 404 — Barcelona 1984
 
-**Versión 0.21.0 ALPHA · El turno de noche.** La desaparición de Pau enlaza los quince capítulos. Los informes explican qué se ha descubierto y la portada recupera el hilo al continuar. Las decisiones y el siguiente capítulo se guardan juntos. [Diseño de campaña](CAMPAÑA.md).
+**Versión 0.22.0 ALPHA · Calles en movimiento.** El modo libre añade tres encargos señalados en azul, peatones y más tráfico por barrios. Las patrullas frenan en giros, buscan a Gael en el último sitio donde lo vieron y abandonan la búsqueda si se mantiene fuera de vista. [Diseño de campaña](CAMPAÑA.md).
 
 Videojuego original de conducción arcade ambientado en una Barcelona ficticia y condensada de 1984. Incluye 15 misiones principales, dos desenlaces, tres encargos secundarios, exploración libre, seis modelos de coches, taller, garaje, secretos y personajes con historias secundarias. Se ejecuta en el navegador con WebGL y archivos locales; no requiere cuenta, servidor remoto ni servicios externos.
 
@@ -10,6 +10,8 @@ Videojuego original de conducción arcade ambientado en una Barcelona ficticia y
 2. En Windows, ejecuta `INICIAR_WINDOWS.bat`; en Linux Mint, ejecuta `bash INICIAR_LINUX.sh`.
 3. Necesitas **Python 3** instalado. Se abre un servidor solo en `127.0.0.1` y el navegador predeterminado. **No abras** `index.html` mediante `file://`.
 4. En la pantalla de inicio, selecciona `BCN · EL CARMEL — 1984`; elige campaña, exploración o un desafío.
+
+En exploración libre, busca los cuadrados azules del minimapa y acércate en coche a 12 km/h o menos. Los encargos pagan pesetas para el taller. Durante una persecución, gira para perder la línea de visión y mantente lejos de las patrullas hasta que termine la búsqueda.
 
 La campaña guarda el **siguiente capítulo desbloqueado** al completar una misión. Al volver a abrir el juego, la portada ofrece continuar ese capítulo. `NUEVA CAMPAÑA` reinicia solo el avance narrativo y sus decisiones; conserva coches, créditos y registros de los demás modos. Una misión a medias comienza de nuevo al recargar. Si el navegador bloquea `localStorage`, el juego avisa y el avance no sobrevivirá al cierre.
 
@@ -21,6 +23,7 @@ Node.js **no es necesario para jugar**. Para ejecutar QA se necesita Node 22+: `
 | --- | --- |
 | Acelerar/frenar y dirección | W/S/A/D o flechas |
 | Entrar o salir del coche | E |
+| Tomar o cancelar un encargo en exploración | U o botón del HUD |
 | Correr a pie | Espacio |
 | Cambiar/recentrar cámara | C |
 | Taller / garaje | T / Y |

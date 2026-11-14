@@ -5,6 +5,10 @@ export function pursuitThreat(states,player){
  if(!active.length)return {level:'none',distance:Infinity,proximity:0,label:'SIN PERSECUCIÓN'};
  const x=Number(player?.x)||0,z=Number(player?.z)||0;
  const distance=Math.min(...active.map(s=>Math.hypot(s.agent.x-x,s.agent.z-z)));
+ if(active.every(p=>p.searching)){
+  const seconds=Math.max(1,Math.ceil(6-Math.min(...active.map(p=>p.calm))));
+  return {level:'approaching',distance,proximity:0,label:'BUSCÁNDOTE · FUERA DE VISTA '+seconds+' s'};
+ }
  const proximity=clamp((120-distance)/110,0,1);
  return {level:distance<18?'critical':distance<55?'high':'approaching',distance,proximity,
   label:distance<18?'PATRULLA ENCIMA · EVITA DETENERTE':distance<55?'PATRULLA MUY CERCA':'PATRULLAS EN APROXIMACIÓN'};
