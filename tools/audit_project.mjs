@@ -30,7 +30,7 @@ for(const id of staticButtons){
  // Acciones por teclado/touch, eventos directos o ui.start están contemplados.
  const match=main.includes(`$('${id}').addEventListener(`)||
   (id==='startBtn'&&main.includes('ui.start.addEventListener('))||
-  /^(touchLeft|touchRight|touchBrake|touchGas)$/.test(id)&&main.includes(`'${id}'`);
+  /^(touchLeft|touchRight|touchBrake|touchGas|touchSprint)$/.test(id)&&main.includes(`'${id}'`);
  if(!match)noListener.push(id);
 }
 assert(!noListener.length,`Botones HTML sin registro visible de acción: ${noListener.join(', ')}`);

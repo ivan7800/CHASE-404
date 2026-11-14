@@ -1,12 +1,16 @@
 # CHASE 404 — Plan vigente
 
-**Versión:** 0.19.0 ALPHA · **Destino:** [GitHub Pages](https://ivan7800.github.io/CHASE-404/) · **Código:** [ivan7800/CHASE-404](https://github.com/ivan7800/CHASE-404)
+**Versión:** 0.20.0 ALPHA · **Destino:** [GitHub Pages](https://ivan7800.github.io/CHASE-404/) · **Código:** [ivan7800/CHASE-404](https://github.com/ivan7800/CHASE-404)
 
 ## Fase actual: ciudad legible y validación jugable
 
 La campaña de 15 misiones, dos desenlaces, tres encargos y exploración están implementados. Esta fase reduce la geometría estática y extiende la identidad de calle desde el Carmel a Gràcia y el Guinardó. El juego sigue en ALPHA: existen comprobaciones automáticas, pero no evidencias completas de partidas con WebGL, sonido y rendimiento real.
 
-## Alcance de 0.19.0
+## Alcance de 0.20.0
+
+Navegación de misiones, conducción y cámara, arranque con almacenamiento bloqueado, controles táctiles y mando estándar. Consulta [el informe de validación](QA_v0.20.0.md).
+
+## Alcance anterior de 0.19.0
 
 - [x] Sustituir caras ocultas de cristales lejanos y fachadas por planos con normales hacia la calle.
 - [x] Dar tratamiento propio a tres fachadas de Gràcia y tres del Guinardó sin añadir edificios ni colisionadores.

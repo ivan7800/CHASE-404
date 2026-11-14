@@ -1,7 +1,7 @@
 /** CHASE 404 — first pursuit prototype, deterministic, no external dependencies.
  * Patrol activates after sustained speeding. Contact causes capture only at low speed.
  */
-import {nearestStreet} from './city.js';
+import {CITY,nearestStreet} from './city.js';
 import {roadPath} from './road-network.js';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const wrap=a=>Math.atan2(Math.sin(a),Math.cos(a));
@@ -13,12 +13,17 @@ export function stepPolice(state,dt,player){
  if(!state.active){
   state.heat=clamp(state.heat+(kmh>85?step:-step*.8),0,8);
   if(state.heat>=3){const road=nearestStreet(player.x,player.z);state.active=true;state.escaped=false;state.captured=false;state.arrest=0;state.calm=0;
-   const a=state.agent;a.x=road.x-road.tx*35;a.z=road.z-road.tz*35;a.yaw=Math.atan2(road.tx,road.tz);a.speed=0;state.route=[];state.routeTimer=0;}
+   const a=state.agent;const [start,end]=CITY.streets[road.street].slice(road.segment,road.segment+2);
+   const aDistance=Math.hypot(start[0]-road.x,start[1]-road.z),bDistance=Math.hypot(end[0]-road.x,end[1]-road.z);
+   const behind=kmh>0&&Number.isFinite(player.yaw)&&Math.sin(player.yaw)*road.tx+Math.cos(player.yaw)*road.tz<0?1:-1;
+   const direction=(behind===1?bDistance:aDistance)>=28?behind:(bDistance>=aDistance?1:-1);
+   const distance=Math.min(35,direction===1?bDistance:aDistance);
+   a.x=road.x+road.tx*distance*direction;a.z=road.z+road.tz*distance*direction;a.yaw=Math.atan2(-direction*road.tx,-direction*road.tz);a.speed=0;state.route=[];state.routeTimer=0;}
   return state;
  }
  const a=state.agent,dx=player.x-a.x,dz=player.z-a.z,dist=Math.hypot(dx,dz);
  state.routeTimer-=step;
- if(state.routeTimer<=0||!state.route.length){state.route=roadPath(a.x,a.z,player.x,player.z);state.routeTimer=0.8;}
+ if(state.routeTimer<=0){state.route=roadPath(a.x,a.z,player.x,player.z);state.routeTimer=0.8;}
  // Follow successive road waypoints instead of steering through buildings.
  while(state.route.length>1&&Math.hypot(state.route[0].x-a.x,state.route[0].z-a.z)<8)state.route.shift();
  const goal=state.route[0]||nearestStreet(player.x,player.z);

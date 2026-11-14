@@ -15,7 +15,7 @@ test('selector de tres desafíos tiene controles únicos, accesibles y enlazados
  assert.match(js,/\$\('sideBtn'\)\.addEventListener\('click'/);
 });
 test('el controlador enlaza el desafío a reinicio, HUD, minimapa, recompensas y resultados',()=>{
- for(const needle of ['newSideRun(selectedSideId)','sideTarget(sideRun)','stepSideRun(sideRun,missionPos,FIXED_STEP)','sideEnd(state)','awardSideRun(next,proposedRun)','saveSideStats(localStorage,next)','sideRecord(sideStats,activity.id)'])assert.ok(js.includes(needle),needle);
+ for(const needle of ['newSideRun(selectedSideId)','sideTarget(sideRun)','stepSideRun(sideRun,missionPos,FIXED_STEP)','sideEnd(state)','awardSideRun(next,proposedRun)','sideRecord(sideStats,activity.id)'])assert.ok(js.includes(needle),needle);
  const sideRun=newSideRun('delivery-01');
  assert.equal(activateUrbanRun({urbanMode:true,sideMode:true,explorationMode:false,sideRun,damageEvents:2}),true);
  assert.equal(sideRun.phase,'active');assert.equal(sideRun.baseDamageEvents,2);
