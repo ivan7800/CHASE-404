@@ -1,3 +1,4 @@
+import {campaignBriefing,campaignOutcome} from './campaign-story.js';
 import { campaignStartPose } from './campaign-start.js';
 import { readGamepad } from './gamepad.js';
 import { roadPath } from './road-network.js';
@@ -16,13 +17,12 @@ import {DISCOVERIES,DISCOVERY_COMPLETION_BONUS,nearestDiscovery,claimDiscovery,d
 import {DELIVERY,SIDE_ACTIVITIES,getSideActivity,newSideRun,stepSideRun,sideTarget,sideRecord,readSideStats,saveSideStats,awardSideRun} from './side-activities.js';
 import {CARMEL_GARAGE,garageAvailable,parkVehicle,swapParkedVehicle,readCollection,saveCollection,GARAGE_CAPACITY} from './vehicle-collection.js';
 import {WORKSHOP,UPGRADE_TYPES,canUseWorkshop,repairPrice,purchaseRepair,purchaseUpgrade,tuneWithUpgrades,upgradeLevels} from './workshop.js';
-import {FINAL_CHOICE_KEY,writeFinalChoice,readFinalChoice} from './final-choice.js';
-import {finalChoiceForNextMission,rememberFinalChoice} from './campaign-session.js';
+import {readFinalChoice} from './final-choice.js';
 import {CAMPAIGN_PROGRESS_KEY,readCampaign,writeCampaign,advanceCampaign,freshCampaign} from './campaign-progress.js';
 import {activateUrbanRun} from './run-lifecycle.js';
-import {ROUTE_KEY,readRoute,writeRoute} from './campaign-choice.js';
+import {readRoute} from './campaign-choice.js';
 import {createSuspect,stepSuspect} from './suspect.js';
-import {newMission,stepMission,missionTarget,missionDistance,MISSION_POINTS,missionChapter} from './mission.js';
+import {newMission,stepMission,missionTarget,missionDistance,missionChapter} from './mission.js';
 import {createCar,createUrbanCar,resetCar,step,FIXED_STEP,formatTime} from './physics.js';
 import {Controls} from './controls.js';
 import {CITY} from './city.js';
@@ -67,14 +67,20 @@ function updateObjectivePresentation(){
  const info=objectivePresentation(target,index,sideMode()?selectedActivity().points.length:missionChapter(selectedChapter).points.length);
  $('objectiveAnnouncementStep').textContent=info.step;
  $('objectiveAnnouncementTitle').textContent=info.title;
- $('objectiveAnnouncementInstruction').textContent=info.instruction;
+ $('objectiveAnnouncementInstruction').textContent=target.kind==='branch'?target.alternatives.map((option,i)=>String.fromCharCode(65+i)+' · '+option.name).join('   /   '):info.instruction;
  panel.hidden=false;
 }
 
 const ui={overlay:$('overlay'),start:$('startBtn'),introTitle:$('introTitle'),help:$('helpOverlay'),notice:$('notice'),speed:$('speed'),fill:$('speedFill'),gear:$('gear'),lap:$('lapCount'),clock:$('lapClock'),best:$('bestTime'),last:$('lastTime'),sector:$('sectorCount'),surface:$('surfaceStatus'),fps:$('fpsIndicator'),model:$('modelIndicator'),minimap:$('minimap'),position:$('racePosition'),positionTotal:$('raceTotal'),raceLap:$('raceLap'),raceLaps:$('raceLaps'),raceClock:$('raceClock'),gap:$('raceGap'),list:$('leaderboard'),finish:$('finishOverlay'),finishTitle:$('finishTitle'),finishPosition:$('finishPosition'),finishTime:$('finishTime'),finishBoard:$('finishBoard')};
 let campaign=readCampaign(storage),campaignSaveOk=storageReadable;
 let selectedChapter=campaign.nextChapter;
-let sessionFinalChoice=null,sessionRoute=null;
+// Old saves stored choices separately. The next checkpoint writes both choices together.
+function hydrateCampaign(progress){
+ return {...progress,
+  routeChoice:Object.hasOwn(progress,'routeChoice')?progress.routeChoice:progress.nextChapter>8?readRoute(storage):null,
+  finalChoice:Object.hasOwn(progress,'finalChoice')?progress.finalChoice:progress.nextChapter>14?readFinalChoice(storage):null};
+}
+campaign=hydrateCampaign(campaign);
 let workshopOpen=false,workshopFocus=null;
 let collectionOpen=false,collectionFocus=null;
 let archiveOpen=false,archiveFocus=null;
@@ -271,7 +277,7 @@ let savedBest=readRecord();
 const currentMode=()=>MODES.find(m=>m.id===mode)||MODES[0];
 const cupActive=()=>mode==='championship'&&profile.cup;
 const storageSave=()=>{let saved=false;try{saved=writeProfile(storage,profile);}catch{}if(!saved&&started)notice('NO SE PUDO GUARDAR EL PERFIL');};
-function initRace(){sideRun=sideMode()?newSideRun(selectedSideId):null;pedestrian=makePedestrian();mission=newMission(selectedChapter,selectedChapter===9?(sessionRoute??readRoute(storage)):null,selectedChapter===15?finalChoiceForNextMission(sessionFinalChoice,readFinalChoice(storage)):null);streetTraffic=createTraffic();suspect=createSuspect();urbanElapsed=0;police=createPolice();ambushPatrols=[];car=urbanMode?createUrbanCar():createCar();if(urbanMode&&!sideMode()&&!explorationMode())Object.assign(car,campaignStartPose(selectedChapter));car.vehicleId=getCar($('carSelect').value).id;car.tune=urbanMode?tuneWithUpgrades(car.vehicleId,sideStats):{...getCar(car.vehicleId).tune};renderer?.changeVehicle(car.vehicleId);race=makeRace({laps:currentMode().laps,rivals:currentMode().rivals});race.order=standings(race,car);race.position=race.order.find(e=>e.id==='YOU').position;runId=Date.now()+'-'+Math.random().toString(36).slice(2);cupResult=null;finishResolved=false;}
+function initRace(){sideRun=sideMode()?newSideRun(selectedSideId):null;pedestrian=makePedestrian();mission=newMission(selectedChapter,campaign.routeChoice,campaign.finalChoice);streetTraffic=createTraffic();suspect=createSuspect();urbanElapsed=0;police=createPolice();ambushPatrols=[];car=urbanMode?createUrbanCar():createCar();if(urbanMode&&!sideMode()&&!explorationMode())Object.assign(car,campaignStartPose(selectedChapter,mission.finalChoice));car.vehicleId=getCar($('carSelect').value).id;car.tune=urbanMode?tuneWithUpgrades(car.vehicleId,sideStats):{...getCar(car.vehicleId).tune};renderer?.changeVehicle(car.vehicleId);race=makeRace({laps:currentMode().laps,rivals:currentMode().rivals});race.order=standings(race,car);race.position=race.order.find(e=>e.id==='YOU').position;runId=Date.now()+'-'+Math.random().toString(36).slice(2);cupResult=null;finishResolved=false;}
 /** Taller contextual: solo cuando Gael está junto a la entrada y no hay persecución. */
 function workshopAvailable(){const pos=pedestrian.active?pedestrian:car;return canUseWorkshop({urban:urbanMode,onFoot:pedestrian.active,x:pos.x,z:pos.z,speed:car.speed,policeActive:police.active||ambushPatrols.some(p=>p.active),vehicleX:car.x,vehicleZ:car.z});}
 function showWorkshop(){
@@ -386,7 +392,7 @@ function unpause(){
 }
 function showHelp(){if(helpOpen||storyOpen||contactOpen||archiveOpen||workshopOpen||collectionOpen||settingsOpen)return;helpOpen=true;clearControls();ui.help.hidden=false;audio.pause(true);}
 function hideHelp(){ui.help.hidden=true;helpOpen=false;audio.pause(paused);}
-function togglePause(){if(storyOpen){closeStoryBeat();return;}if(contactOpen){closeContactPanel();return;}if(archiveOpen){closeArchive();return;}if(collectionOpen){closeCollection();return;}if(workshopOpen){closeWorkshop();return;}if(settingsOpen){closeSettings();return;}if(helpOpen){hideHelp();return;}if(!started){unpause();return;}if(paused)unpause();else setPaused(true);}
+function togglePause(){if(!ui.finish.hidden)return;if(storyOpen){closeStoryBeat();return;}if(contactOpen){closeContactPanel();return;}if(archiveOpen){closeArchive();return;}if(collectionOpen){closeCollection();return;}if(workshopOpen){closeWorkshop();return;}if(settingsOpen){closeSettings();return;}if(helpOpen){hideHelp();return;}if(!started){unpause();return;}if(paused)unpause();else setPaused(true);}
 function reset(){
  closeStoryBeat();clearObjectivePresentation();initRace();renderer.startCam=true;renderer.effects?.clear();ui.finish.hidden=true;
  if(started&&!paused)activateUrbanRun({urbanMode,sideMode:sideMode(),explorationMode:explorationMode(),mission,sideRun,damageEvents:car.damageEvents});
@@ -395,7 +401,7 @@ function reset(){
 }
 function restartRace(){if(mode==='championship'&&!profile.cup)beginCup(profile,$('carSelect').value);if(cupActive()){syncCupSelection();}reset();updateProfileUI();storageSave();unpause();}
 function backToGarage(){
- selectedChapter=campaign.nextChapter;sessionFinalChoice=null;sideSelected=false;freeExploration=false;updateSideMenu();
+ selectedChapter=campaign.nextChapter;sideSelected=false;freeExploration=false;updateSideMenu();
  if(cupActive())syncCupSelection();reset();updateProfileUI();started=false;paused=true;audio.pause(true);ui.finish.hidden=true;ui.overlay.hidden=false;
  ui.introTitle.innerHTML=urbanMode?'EL CARMEL<br><em>1984.</em>':'ELIGE<br>TU <em>COCHE.</em>';
  ui.start.innerHTML='INICIAR MOTOR <span>↗</span>';
@@ -410,17 +416,16 @@ function updateCampaignUI(){
  if(urbanMode){
   document.querySelector('.intro-index b').textContent=sideMode()?'DESAFÍO':explorationMode()?'LIBRE':'MISIÓN '+String(selectedChapter).padStart(2,'0');
   document.querySelector('.topline span:last-child').textContent=sideMode()?selectedActivity().title:explorationMode()?'EXPLORACIÓN LIBRE':'MISIÓN '+String(selectedChapter).padStart(2,'0')+' · '+missionChapter(selectedChapter).title;
-  $('introStory').textContent=sideMode()?'Recorre Barcelona para completar el encargo. No altera el capítulo desbloqueado.':explorationMode()?'Explora los barrios del Carmel y conversa con sus habitantes a tu ritmo.':selectedChapter===1?'Barcelona, octubre de 1984. Gael Verenne debe recoger una cinta comprometida y llevarla a un contacto antes de que sea demasiado tarde.':'Barcelona, octubre de 1984. Continúa la historia de Gael Verenne: '+missionChapter(selectedChapter).title+'. Sigue los objetivos que aparecerán al iniciar la misión.';
+  $('introStory').textContent=sideMode()?'Recorre Barcelona para completar el encargo. No altera el capítulo desbloqueado.':explorationMode()?'Explora los barrios del Carmel y conversa con sus habitantes a tu ritmo.':campaignBriefing(selectedChapter,campaign.finalChoice);
  }
  if(urbanMode&&!started)ui.start.innerHTML=sideMode()?'INICIAR DESAFÍO <span>↗</span>':explorationMode()?'EXPLORAR BARCELONA <span>↗</span>':available?'CONTINUAR MISIÓN '+String(selectedChapter).padStart(2,'0')+' <span>↗</span>':'INICIAR MOTOR <span>↗</span>';
 }
 function newCampaign(){
  if(started||!urbanMode)return;
  try{
-  storage.setItem(CAMPAIGN_PROGRESS_KEY,JSON.stringify(freshCampaign()));
-  storage.removeItem(ROUTE_KEY);storage.removeItem(FINAL_CHOICE_KEY);
+  storage.setItem(CAMPAIGN_PROGRESS_KEY,JSON.stringify(hydrateCampaign(freshCampaign())));
  }catch{notice('NO SE PUDO REINICIAR LA CAMPAÑA · ALMACENAMIENTO BLOQUEADO');return;}
- campaign=freshCampaign();campaignSaveOk=true;selectedChapter=1;sessionFinalChoice=null;sessionRoute=null;sideSelected=false;freeExploration=false;
+ campaign=hydrateCampaign(freshCampaign());campaignSaveOk=true;selectedChapter=1;sideSelected=false;freeExploration=false;
  reset();updateSideMenu();updateCampaignUI();renderHUD();notice('NUEVA CAMPAÑA · MISIÓN 01');
 }
 function finishRace(){
@@ -482,7 +487,7 @@ function syncCupSelection(){
  $('trackSelect').value=cupTrack(profile);$('carSelect').value=cup.car;
  selectTrack($('trackSelect').value);renderer.changeTrack();renderer.changeVehicle(cup.car);
 }
-function nextCupRound(){if(urbanMode&&selectedChapter<15&&mission.phase==='won'){sessionFinalChoice=rememberFinalChoice(sessionFinalChoice,mission);selectedChapter++;reset();updateProfileUI();unpause();return;}if(!cupActive())return;syncCupSelection();reset();savedBest=readRecord();updateSelectionUI();updateProfileUI();storageSave();unpause();}
+function nextCupRound(){if(urbanMode&&selectedChapter<15&&mission.phase==='won'){selectedChapter++;reset();updateProfileUI();unpause();return;}if(!cupActive())return;syncCupSelection();reset();savedBest=readRecord();updateSelectionUI();updateProfileUI();storageSave();unpause();}
 function selectMode(){
  mode=MODES.some(x=>x.id===$('modeSelect').value)?$('modeSelect').value:'arcade';
  if(mode==='championship'){
@@ -594,7 +599,7 @@ function drawMap(){
  const found=new Set(cleanDiscoveries(sideStats.discoveries));
  for(const spot of DISCOVERIES){const [sx,sy]=loc([spot.x,spot.z]);ctx.fillStyle=found.has(spot.id)?'#608a80':'#f4cd73';ctx.strokeStyle='#17282f';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(sx,sy,found.has(spot.id)?2.5:4.1,0,Math.PI*2);ctx.fill();ctx.stroke();}const target=explorationMode()?null:sideMode()?sideTarget(sideRun):missionTarget(mission);const actor=pedestrian.active?pedestrian:car;
  drawNavigation(target?.kind==='tail'&&suspect.active?suspect:target,actor,loc);
- if(target?.kind==='branch'){for(const option of target.alternatives){ctx.fillStyle='#ff8060';ctx.strokeStyle='#fff0c5';ctx.lineWidth=2;ctx.beginPath();ctx.arc(...loc([option.x,option.z]),6,0,Math.PI*2);ctx.fill();ctx.stroke();}}else if(target){ctx.fillStyle='#ff8060';ctx.strokeStyle='#fff0c5';ctx.lineWidth=2;ctx.beginPath();ctx.arc(...loc(target.kind==='tail'&&suspect.active?[suspect.x,suspect.z]:[target.x,target.z]),6,0,Math.PI*2);ctx.fill();ctx.stroke();}drawHeading(actor,loc);return;}
+ if(target?.kind==='branch'){for(const option of target.alternatives){ctx.fillStyle='#ff8060';ctx.strokeStyle='#fff0c5';ctx.lineWidth=2;ctx.beginPath();ctx.arc(...loc([option.x,option.z]),6,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#fff0bc';ctx.font='bold 9px system-ui';ctx.fillText(option===target.alternatives[0]?'A':'B',loc([option.x,option.z])[0]+8,loc([option.x,option.z])[1]+3);}}else if(target){ctx.fillStyle='#ff8060';ctx.strokeStyle='#fff0c5';ctx.lineWidth=2;ctx.beginPath();ctx.arc(...loc(target.kind==='tail'&&suspect.active?[suspect.x,suspect.z]:[target.x,target.z]),6,0,Math.PI*2);ctx.fill();ctx.stroke();}drawHeading(actor,loc);return;}
  const ps=Array.from({length:200},(_,i)=>sample(LENGTH*i/200));
  const minX=Math.min(...ps.map(p=>p.x)),maxX=Math.max(...ps.map(p=>p.x));
  const minZ=Math.min(...ps.map(p=>p.z)),maxZ=Math.max(...ps.map(p=>p.z));
@@ -646,7 +651,35 @@ function renderMissionReport(won){
  for(const [name,value] of entries){const row=document.createElement('div');row.className='finish-row';const label=document.createElement('span');label.textContent=name;const strong=document.createElement('b');strong.textContent=value;row.append(label,strong);ui.finishBoard.append(row);}
  const message=document.createElement('p');message.className='mission-report-summary';message.textContent=report.summary;ui.finishBoard.append(message);
 }
-function missionEnd(won,{captured=false}={}){clearObjectivePresentation();if(won&&selectedChapter===14&&mission.finalChoice&&!writeFinalChoice(storage,mission.finalChoice))notice('NO SE PUDO GUARDAR LA DECISIÓN FINAL');if(won&&selectedChapter===8&&mission.routeChoice){sessionRoute=mission.routeChoice;if(!writeRoute(storage,sessionRoute))notice('NO SE PUDO GUARDAR LA DECISIÓN DE RUTA');}if(won){campaign=advanceCampaign(campaign,selectedChapter);campaignSaveOk=writeCampaign(storage,campaign);if(!campaignSaveOk)notice('NO SE PUDO GUARDAR EL AVANCE · CONTINÚA EN ESTA SESIÓN');}paused=true;started=false;clearControls();audio.pause(true);ui.overlay.hidden=true;ui.finish.hidden=false;ui.finishTitle.textContent=missionFailureTitle({won,captured,chapter:selectedChapter,tailLost:mission.tailLost});ui.finishPosition.textContent=won?'MISIÓN '+String(selectedChapter).padStart(2,'0')+' / OK':'MISIÓN '+String(selectedChapter).padStart(2,'0')+' / FALLO';ui.finishTime.textContent=formatTime(mission.elapsed);$('finishSelection').textContent='GAEL VERENNE · EL CARMEL · OCTUBRE 1984';ui.finishBoard.replaceChildren();renderMissionReport(won);$('rewardReport').textContent=won?(selectedChapter===15?(mission.finalChoice==='RECUPERAR LAS PRUEBAS'?'Gael salva a su hermano y presenta las pruebas contra Salvat. Clara confirma su detención. Barcelona conserva cicatrices, pero los dos hermanos salen juntos. FIN · LA VERDAD.':'Gael recupera las pruebas que faltaban y encara a Salvat. Su hermano está a salvo, aunque parte de la red consigue escapar. FIN · LA FAMILIA.') :selectedChapter===14?(mission.finalChoice==='RESCATAR A MI HERMANO'?'Gael rescata a su hermano, pero Salvat todavía conserva pruebas comprometedoras. La persecución final será más peligrosa.':'Gael reúne pruebas decisivas contra Salvat, pero su hermano sigue retenido. El rescate quedará para la última noche.') :selectedChapter===13?'El expediente y la grabación identifican a Víctor Salvat, inspector corrupto que dirige los traslados clandestinos. El hermano de Gael sigue retenido y el próximo movimiento será decisivo.':selectedChapter===12?'El testigo ha identificado un registro oculto en el Eixample. Gael recupera un código que apunta a un traslado nocturno de su hermano desde el puerto.':selectedChapter===11?'Gael saca con vida al testigo del almacén. El rescate confirma que la red criminal conoce su siguiente movimiento.':selectedChapter===10?'Clara revela que el inspector utiliza el almacén 04 como tapadera. El hermano de Gael fue trasladado, pero sigue vivo.':selectedChapter===9?'La declaración vincula a un inspector con el convoy. Gael sabe ahora a quién buscar.':selectedChapter===8?'Gael escapó por '+(mission.routeChoice||'una calle secundaria')+'. La emboscada confirma que hay policías comprados.':selectedChapter===7?'Gael ha memorizado la matrícula del sedán gris. El convoy cambia sus rutas cada noche.':selectedChapter===6?'Gael escucha la conversación y descubre que la organización prepara un traslado clandestino. Su hermano podría seguir vivo.':selectedChapter===5?'En el mirador, Gael identifica al hombre que ordenó la desaparición de su hermano. La cinta era solo el principio.':selectedChapter===4?'En el almacén, Gael descubre una lista de matrículas y una cita al anochecer en Montjuïc.':selectedChapter===3?'La entrega revela la conexión entre las avenidas y los almacenes del puerto.':selectedChapter===2?'El contacto de Gràcia confirma que la cinta señala una operación en el puerto.':'Gael ha entregado la cinta. Una voz al otro lado del teléfono conoce su nombre.'):'El contacto se ha marchado. Gael tendrá que intentarlo de nuevo.';$('restartRaceBtn').hidden=false;$('nextCupBtn').hidden=!(won&&selectedChapter<15);$('nextCupBtn').textContent=selectedChapter===1?'MISIÓN 02 · GRÀCIA ↗':selectedChapter===2?'MISIÓN 03 · EIXAMPLE ↗':selectedChapter===3?'MISIÓN 04 · PUERTO ↗':selectedChapter===4?'MISIÓN 05 · MONTJUÏC ↗':selectedChapter===5?'MISIÓN 06 · VIGILANCIA ↗':selectedChapter===6?'MISIÓN 07 · SEGUIMIENTO ↗':selectedChapter===7?'MISIÓN 08 · EMBOSCADA ↗':selectedChapter===8?'MISIÓN 09 · TESTIGOS ↗':selectedChapter===9?'MISIÓN 10 · CLARA ↗':selectedChapter===10?'MISIÓN 11 · RESCATE ↗':selectedChapter===11?'MISIÓN 12 · ARCHIVO ↗':selectedChapter===12?'MISIÓN 13 · LA CINTA ↗':selectedChapter===13?'MISIÓN 14 · DECISIÓN ↗':'MISIÓN 15 · FINAL ↗';$('restartRaceBtn').textContent='REPETIR MISIÓN ↗';$('backToGarageBtn').textContent='VOLVER AL GARAJE ↗';}
+function missionEnd(won,{captured=false}={}){
+ clearObjectivePresentation();
+ if(won){
+  campaign=advanceCampaign(campaign,selectedChapter,mission);
+  campaignSaveOk=writeCampaign(storage,campaign);
+ }
+ paused=true;started=false;clearControls();audio.pause(true);
+ ui.overlay.hidden=true;ui.finish.hidden=false;
+ ui.finishTitle.textContent=missionFailureTitle({won,captured,chapter:selectedChapter,tailLost:mission.tailLost});
+ ui.finishPosition.textContent='MISIÓN '+String(selectedChapter).padStart(2,'0')+(won?' / OK':' / FALLO');
+ ui.finishTime.textContent=formatTime(mission.elapsed);
+ $('finishSelection').textContent='GAEL VERENNE · EL CARMEL · OCTUBRE 1984';
+ ui.finishBoard.replaceChildren();
+ renderMissionReport(won);
+ $('rewardReport').textContent=won?campaignOutcome(mission):'Reintenta la misión desde su primer objetivo.';
+ if(won&&!campaignSaveOk){
+  const warning=document.createElement('p');
+  warning.className='mission-report-summary';
+  warning.textContent='Avance conservado en esta sesión. El navegador no ha podido guardarlo.';
+  ui.finishBoard.append(warning);
+ }
+ const next=$('nextCupBtn');
+ next.hidden=!won||selectedChapter>=15;
+ if(!next.hidden)next.textContent='SIGUIENTE · '+missionChapter(selectedChapter+1).title+' ↗';
+ const restart=$('restartRaceBtn');
+ restart.hidden=false;restart.textContent='REPETIR MISIÓN ↗';
+ $('backToGarageBtn').textContent=won&&selectedChapter===15?'VOLVER A PORTADA ↗':'VOLVER AL GARAJE ↗';
+ (next.hidden?restart:next).focus();
+}
 function renderHUD(){refreshDiscoveryHUD();refreshContactHUD();
  const walking=pedestrian.active;
  if($('app').dataset.onFoot!==String(walking)){
@@ -776,8 +809,8 @@ function frameTick(now){requestAnimationFrame(frame);pollGamepad();if(!last)last
   notice(selectedChapter===15?'¡SALVAT HA DADO LA ORDEN! · ESCAPA DE LAS PATRULLAS':selectedChapter===11?'¡ALERTA! · LA POLICÍA BLOQUEA LA SALIDA DEL MUELLE':'¡EMBOSCADA! · DOS PATRULLAS · ELIGE TU RUTA');
  }
  const targetPose=pedestrian.active?{x:pedestrian.x,z:pedestrian.z,kmh:0}:car;
- for(const p of ambushPatrols)stepPolice(p,FIXED_STEP,targetPose);
- const contact=pedestrian.active?{contacts:0,impact:0}:stepUrbanContacts(car,police.active?[...streetTraffic,police.agent,...ambushPatrols.filter(p=>p.active).map(p=>p.agent)]:[...streetTraffic,...ambushPatrols.filter(p=>p.active).map(p=>p.agent)],FIXED_STEP);if(contact.contacts){audio.cue('collision');const severity=applyImpact(car,contact.impact,'vehicle');if(severity>0)cinematicImpact(Math.min(1,.24+severity/24));if(severity>0&&car.damageEvents%2===1)notice('IMPACTO · ESTADO DEL VEHÍCULO '+damageCondition(car).health+'%');}else if(!pedestrian.active&&car.barrierContact&&speedBefore>8){const severity=applyImpact(car,speedBefore,'barrier');if(severity>0)cinematicImpact(Math.min(1,.2+severity/24));if(severity>0&&car.damageEvents%2===1)notice('GOLPE EN BARRERA · REVISAR VEHÍCULO');}tickDamage(car,FIXED_STEP);if(!prevPursuit&&police.active){notice('POLICÍA · EXCESO DE VELOCIDAD · GANA DISTANCIA');audio.cue('pursuit');}if(police.escaped){police.escaped=false;audio.cue('escape');notice('HAS DESPISTADO A LA PATRULLA');}if(police.captured||ambushPatrols.some(p=>p.captured)){if(explorationMode()){reset();notice('LA POLICÍA TE HA DEVUELTO AL CARMEL · PUEDES SEGUIR EXPLORANDO');break;}if(sideMode()){sideRun.phase='lost';sideEnd('lost','DETENIDO POR LA POLICÍA');break;}missionEnd(false,{captured:true});break;}const missionPos=pedestrian.active?{...car,x:pedestrian.x,z:pedestrian.z,kmh:0,onFoot:true}:car;missionPos.suspectDistance=suspect.active?Math.hypot(missionPos.x-suspect.x,missionPos.z-suspect.z):Infinity;missionPos.patrolDistance=Math.min(nearestEntityDistance([police],missionPos.x,missionPos.z,{police:true}),nearestEntityDistance(ambushPatrols,missionPos.x,missionPos.z,{police:true}));const completedBefore=mission.index;const state=explorationMode()?'active':sideMode()?stepSideRun(sideRun,missionPos,FIXED_STEP):stepMission(mission,missionPos,FIXED_STEP);if(sideMode()&&(state==='won'||state==='lost')){sideEnd(state);break;}if(state==='checkpoint'){{const next=sideMode()?sideTarget(sideRun):missionTarget(mission);notice(objectiveTransition(next,sideMode()));updateObjectivePresentation();}if(!sideMode()&&!explorationMode()&&showStoryBeat(storyBeat(selectedChapter,completedBefore))){acc=0;break;}}if(state==='won'||state==='lost'){missionEnd(state==='won');break;}}if(!urbanMode&&result.contact&&!previousRaceContact)cinematicImpact(.42);if(result.contact&&race.collisions>0&&car.hitCooldown>.4&&frames%120===0)notice('¡CONTACTO CON OTRO COCHE!');if(car.wall&&frames%90===0)audio.cue('collision');if(!pedestrian.active)renderer.emitDrivingEffects?.(car,FIXED_STEP,inputs.handbrake);if(car.completed!==previous){audio.cue('lap');if(car.best!==null&&(savedBest===null||car.best<savedBest)){savedBest=car.best;saveRecord(savedBest);audio.cue('record');notice('¡NUEVO RÉCORD! '+formatTime(savedBest));}else notice('VUELTA COMPLETADA '+formatTime(car.lastLap));}acc-=FIXED_STEP;ticks++;if(result.finished){finishRace();break;}}if(ticks===12)acc=Math.min(acc,FIXED_STEP*3);}else acc=0;
+ for(const p of ambushPatrols)if(p.active)stepPolice(p,FIXED_STEP,targetPose);
+ const contact=pedestrian.active?{contacts:0,impact:0}:stepUrbanContacts(car,police.active?[...streetTraffic,police.agent,...ambushPatrols.filter(p=>p.active).map(p=>p.agent)]:[...streetTraffic,...ambushPatrols.filter(p=>p.active).map(p=>p.agent)],FIXED_STEP);if(contact.contacts){audio.cue('collision');const severity=applyImpact(car,contact.impact,'vehicle');if(severity>0)cinematicImpact(Math.min(1,.24+severity/24));if(severity>0&&car.damageEvents%2===1)notice('IMPACTO · ESTADO DEL VEHÍCULO '+damageCondition(car).health+'%');}else if(!pedestrian.active&&car.barrierContact&&speedBefore>8){const severity=applyImpact(car,speedBefore,'barrier');if(severity>0)cinematicImpact(Math.min(1,.2+severity/24));if(severity>0&&car.damageEvents%2===1)notice('GOLPE EN BARRERA · REVISAR VEHÍCULO');}tickDamage(car,FIXED_STEP);if(!prevPursuit&&police.active){notice('POLICÍA · EXCESO DE VELOCIDAD · GANA DISTANCIA');audio.cue('pursuit');}if(police.escaped){police.escaped=false;audio.cue('escape');notice('HAS DESPISTADO A LA PATRULLA');}if(police.captured||ambushPatrols.some(p=>p.captured)){if(explorationMode()){reset();notice('LA POLICÍA TE HA DEVUELTO AL CARMEL · PUEDES SEGUIR EXPLORANDO');break;}if(sideMode()){sideRun.phase='lost';sideEnd('lost','DETENIDO POR LA POLICÍA');break;}missionEnd(false,{captured:true});break;}const missionPos=pedestrian.active?{...car,x:pedestrian.x,z:pedestrian.z,kmh:0,onFoot:true}:car;missionPos.suspectDistance=suspect.active?Math.hypot(missionPos.x-suspect.x,missionPos.z-suspect.z):Infinity;missionPos.patrolDistance=Math.min(nearestEntityDistance([police],missionPos.x,missionPos.z,{police:true}),nearestEntityDistance(ambushPatrols,missionPos.x,missionPos.z,{police:true}));const completedBefore=mission.index;const state=explorationMode()?'active':sideMode()?stepSideRun(sideRun,missionPos,FIXED_STEP):stepMission(mission,missionPos,FIXED_STEP);if(sideMode()&&(state==='won'||state==='lost')){sideEnd(state);break;}if(state==='checkpoint'){{const next=sideMode()?sideTarget(sideRun):missionTarget(mission);notice(objectiveTransition(next,sideMode()));updateObjectivePresentation();}if(!sideMode()&&!explorationMode()&&showStoryBeat(storyBeat(selectedChapter,completedBefore,mission.finalChoice))){acc=0;break;}}if(state==='won'||state==='lost'){missionEnd(state==='won');break;}}if(!urbanMode&&result.contact&&!previousRaceContact)cinematicImpact(.42);if(result.contact&&race.collisions>0&&car.hitCooldown>.4&&frames%120===0)notice('¡CONTACTO CON OTRO COCHE!');if(car.wall&&frames%90===0)audio.cue('collision');if(!pedestrian.active)renderer.emitDrivingEffects?.(car,FIXED_STEP,inputs.handbrake);if(car.completed!==previous){audio.cue('lap');if(car.best!==null&&(savedBest===null||car.best<savedBest)){savedBest=car.best;saveRecord(savedBest);audio.cue('record');notice('¡NUEVO RÉCORD! '+formatTime(savedBest));}else notice('VUELTA COMPLETADA '+formatTime(car.lastLap));}acc-=FIXED_STEP;ticks++;if(result.finished){finishRace();break;}}if(ticks===12)acc=Math.min(acc,FIXED_STEP*3);}else acc=0;
  if(settings.quality==='auto'&&renderer.fps&&frames%30===0){
   const scale=automaticQuality.observe(renderer.fps,Math.max(.01,(now-(frame.lastAutoAt||now))/1000),!paused&&!settingsOpen&&!helpOpen);
   frame.lastAutoAt=now;

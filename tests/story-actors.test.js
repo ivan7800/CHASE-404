@@ -13,11 +13,11 @@ test('brother appears only when his rescue is pending in chapter 15',()=>{
  assert.deepEqual(visibleStoryActors(15,1,'active','RECUPERAR LAS PRUEBAS'),[]);
 });
 test('Salvat appears only in final encounter and never in side activities',()=>{
- assert.deepEqual(visibleStoryActors(15,2,'active','RECUPERAR LAS PRUEBAS').map(a=>a.id),['salvat']);
+ assert.deepEqual(visibleStoryActors(15,2,'active','RECUPERAR LAS PRUEBAS').map(a=>a.id),['clara']);
  assert.deepEqual(visibleStoryActors(15,2,'won','RECUPERAR LAS PRUEBAS'),[]);
  assert.deepEqual(visibleStoryActors(5,2,'active',null),[]);
 });
 test('reduced motion produces stable figure',()=>{
- assert.deepEqual(storyActorPose(20,'salvat',true),storyActorPose(0,'brother',true));
+ assert.deepEqual(storyActorPose(20,'clara',true),storyActorPose(0,'brother',true));
  assert.notDeepEqual(storyActorPose(0,'brother'),storyActorPose(1,'brother'));
 });

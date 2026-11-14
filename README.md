@@ -1,6 +1,6 @@
 # CHASE 404 — Barcelona 1984
 
-**Versión 0.20.0 ALPHA · Jugabilidad en el Carmel.** El minimapa muestra la ruta de la misión, el rumbo del jugador y las patrullas. Los capítulos posteriores empiezan cerca de su primer objetivo. Se han corregido la marcha atrás, el aviso de barrera, el arranque sin almacenamiento y las salidas de misión cuando ya no quedan patrullas activas.
+**Versión 0.21.0 ALPHA · El turno de noche.** La desaparición de Pau enlaza los quince capítulos. Los informes explican qué se ha descubierto y la portada recupera el hilo al continuar. Las decisiones y el siguiente capítulo se guardan juntos. [Diseño de campaña](CAMPAÑA.md).
 
 Videojuego original de conducción arcade ambientado en una Barcelona ficticia y condensada de 1984. Incluye 15 misiones principales, dos desenlaces, tres encargos secundarios, exploración libre, seis modelos de coches, taller, garaje, secretos y personajes con historias secundarias. Se ejecuta en el navegador con WebGL y archivos locales; no requiere cuenta, servidor remoto ni servicios externos.
 
@@ -40,6 +40,8 @@ El juego está publicado en **[GitHub Pages](https://ivan7800.github.io/CHASE-40
 Los ajustes y avances se almacenan en `localStorage` del navegador. Borrar datos del sitio puede eliminar el progreso. No hay sincronización en la nube. El juego usa representaciones ficticias de vehículos, lugares y personajes; no es una reconstrucción histórica exacta.
 
 ## Verificación y estado
+
+Consulta [QA v0.21.0](QA_v0.21.0.md) para los recorridos de esta versión.
 
 Consulta [QA_v0.20.0.md](QA_v0.20.0.md) para la validación de esta versión. La geometría y los nuevos corredores urbanos se documentan en [QA_v0.19.0.md](QA_v0.19.0.md). La muestra anterior del Carmel está en [QA_v0.18.0.md](QA_v0.18.0.md). La fase anterior se documenta en [QA_v0.17.0.md](QA_v0.17.0.md). Las colisiones y el remate urbano anterior se describen en [QA_v0.16.0.md](QA_v0.16.0.md).
 

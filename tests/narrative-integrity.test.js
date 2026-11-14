@@ -22,10 +22,10 @@ test('actores narrativos no aparecen antes del rescate ni tras completar la misi
  }
  assert.deepEqual(visibleStoryActors(15,0,'active','RESCATAR A MI HERMANO'),[]);
  assert.deepEqual(visibleStoryActors(15,0,'active','RECUPERAR LAS PRUEBAS').map(actor=>actor.id),['brother']);
- assert.equal(visibleStoryActors(15,2,'active','RECUPERAR LAS PRUEBAS')[0],STORY_ACTORS.salvat);
+ assert.equal(visibleStoryActors(15,2,'active','RECUPERAR LAS PRUEBAS')[0],STORY_ACTORS.clara);
 });
 test('abrir interludio corta inmediatamente el bucle físico y elimina el tiempo acumulado',()=>{
  const src=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
- assert.match(src,/if\(!sideMode\(\)&&!explorationMode\(\)&&showStoryBeat\(storyBeat\(selectedChapter,completedBefore\)\)\)\{acc=0;break;\}/);
+ assert.match(src,/if\(!sideMode\(\)&&!explorationMode\(\)&&showStoryBeat\(storyBeat\(selectedChapter,completedBefore,mission\.finalChoice\)\)\)\{acc=0;break;\}/);
  assert.match(src,/storyOpen=false;\$\('storyOverlay'\)\.hidden=true;acc=0;/);
 });
