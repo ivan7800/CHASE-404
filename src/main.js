@@ -1,3 +1,6 @@
+import { campaignStartPose } from './campaign-start.js';
+import { readGamepad } from './gamepad.js';
+import { roadPath } from './road-network.js';
 import {nearestEntityDistance} from './performance.js';
 import {shortcutAllowed} from './navigation-guard.js';
 import {createRuntimeGuard} from './runtime-guard.js';
@@ -38,16 +41,28 @@ import {readSettings,saveSettings,normalizeSettings,DEFAULT_BINDINGS,BINDABLE_CO
 import {makeRace,stepRace,standings,positionDelta,slipstream} from './race.js';
 import {MODES,THEMES,readProfile,writeProfile,recordStart,awardFinish,bestTotal,beginCup,cupTrack,cupTable,completeCupRound,unlockedThemes,changeTheme} from './progression.js';
 const $=id=>document.getElementById(id);
+// Access the browser property inside each caller's error handler.
+const storage={
+ getItem:key=>window.localStorage.getItem(key),
+ setItem:(key,value)=>window.localStorage.setItem(key,value),
+ removeItem:key=>window.localStorage.removeItem(key)
+};
+let storageReadable=true;
+try{storage.getItem(CAMPAIGN_PROGRESS_KEY);}catch{storageReadable=false;}
 let presentedObjectiveKey='';
-function clearObjectivePresentation(){presentedObjectiveKey='';$('objectiveAnnouncement').hidden=true;}
+let dismissedObjectiveKey='';
+let navigationCache=null;
+let gamepadActions={},gamepadWasActive=false;
+function clearObjectivePresentation(){presentedObjectiveKey='';dismissedObjectiveKey='';navigationCache=null;$('objectiveAnnouncement').hidden=true;}
 function updateObjectivePresentation(){
  const panel=$('objectiveAnnouncement');
- if(!urbanMode||!started||paused||explorationMode()||(!sideMode()&&mission.phase!=='active')){panel.hidden=true;return;}
+ if(!urbanMode||!started||paused||helpOpen||settingsOpen||storyOpen||explorationMode()||(!sideMode()&&mission.phase!=='active')){panel.hidden=true;return;}
  const target=sideMode()?sideTarget(sideRun):missionTarget(mission);
  if(!target){panel.hidden=true;return;}
  const index=sideMode()?sideRun.index:mission.index;
  const key=(sideMode()?'SIDE:'+selectedSideId:'MISSION:'+selectedChapter)+':'+index+':'+target.name;
- if(key===presentedObjectiveKey)return;
+ if(key===dismissedObjectiveKey)return;
+ if(key===presentedObjectiveKey){panel.hidden=false;return;}
  presentedObjectiveKey=key;
  const info=objectivePresentation(target,index,sideMode()?selectedActivity().points.length:missionChapter(selectedChapter).points.length);
  $('objectiveAnnouncementStep').textContent=info.step;
@@ -57,20 +72,20 @@ function updateObjectivePresentation(){
 }
 
 const ui={overlay:$('overlay'),start:$('startBtn'),introTitle:$('introTitle'),help:$('helpOverlay'),notice:$('notice'),speed:$('speed'),fill:$('speedFill'),gear:$('gear'),lap:$('lapCount'),clock:$('lapClock'),best:$('bestTime'),last:$('lastTime'),sector:$('sectorCount'),surface:$('surfaceStatus'),fps:$('fpsIndicator'),model:$('modelIndicator'),minimap:$('minimap'),position:$('racePosition'),positionTotal:$('raceTotal'),raceLap:$('raceLap'),raceLaps:$('raceLaps'),raceClock:$('raceClock'),gap:$('raceGap'),list:$('leaderboard'),finish:$('finishOverlay'),finishTitle:$('finishTitle'),finishPosition:$('finishPosition'),finishTime:$('finishTime'),finishBoard:$('finishBoard')};
-let campaign=readCampaign(localStorage),campaignSaveOk=true;
+let campaign=readCampaign(storage),campaignSaveOk=storageReadable;
 let selectedChapter=campaign.nextChapter;
-let sessionFinalChoice=null;
+let sessionFinalChoice=null,sessionRoute=null;
 let workshopOpen=false,workshopFocus=null;
 let collectionOpen=false,collectionFocus=null;
 let archiveOpen=false,archiveFocus=null;
 let contactOpen=false,contactFocus=null,contactView=null;
 let storyOpen=false,storyFocus=null;
-let vehicleCollection=readCollection({getItem:k=>{try{return localStorage.getItem(k)}catch{return null}}});
+let vehicleCollection=readCollection({getItem:k=>{try{return storage.getItem(k)}catch{return null}}});
 let sideSelected=false,sideRun=null,selectedSideId=DELIVERY.id;
 let freeExploration=false;
 const explorationMode=()=>urbanMode&&freeExploration;
 const selectedActivity=()=>getSideActivity(selectedSideId);
-let sideStats=readSideStats({getItem:k=>{try{return localStorage.getItem(k)}catch{return null}}});
+let sideStats=readSideStats({getItem:k=>{try{return storage.getItem(k)}catch{return null}}});
 function sideMode(){return urbanMode&&sideSelected;}
 function availableDiscovery(){return urbanMode&&started&&!paused&&pedestrian.active&&!police.active&&!ambushPatrols.some(p=>p.active)?nearestDiscovery(pedestrian,sideStats.discoveries):null;}
 function contactPossible(){return explorationMode()&&started&&!paused&&pedestrian.active&&!police.active&&!ambushPatrols.some(p=>p.active);}
@@ -84,7 +99,7 @@ function refreshContactHUD(){
 }
 function saveContactTransaction(proposal){
  if(!proposal.ok){$('contactMessage').textContent=proposal.reason;return false;}
- if(!saveSideStats(localStorage,proposal.next)){$('contactMessage').textContent='NO SE PUDO GUARDAR · SIN CAMBIOS';return false;}
+ if(!saveSideStats(storage,proposal.next)){$('contactMessage').textContent='NO SE PUDO GUARDAR · SIN CAMBIOS';return false;}
  sideStats=proposal.next;updateSideMenu();refreshContactHUD();audio.cue('record');return true;
 }
 function showContactPanel(view){
@@ -100,7 +115,7 @@ function contactInteract(){
  if(action.kind==='evidence'){
   const proposal=collectContactEvidence(sideStats,action.contact.id,pedestrian,{onFoot:pedestrian.active,policeActive:police.active});
   if(!proposal.ok){notice(proposal.reason.toUpperCase());return;}
-  if(!saveSideStats(localStorage,proposal.next)){notice('NO SE HA GUARDADO LA PRUEBA');return;}
+  if(!saveSideStats(storage,proposal.next)){notice('NO SE HA GUARDADO LA PRUEBA');return;}
   sideStats=proposal.next;audio.cue('record');showContactPanel({type:'evidence',id:action.contact.id});refreshContactHUD();return;
  }
  showContactPanel({type:'person',id:action.contact.id});
@@ -163,7 +178,7 @@ function collectNearbyDiscovery(){
  const candidate=availableDiscovery();if(!candidate){notice('EXPLORACIÓN · BAJA DEL COCHE Y BUSCA LAS PLACAS DE LATÓN');return;}
  const result=claimDiscovery(sideStats,candidate.secret.id,pedestrian,{onFoot:pedestrian.active,policeActive:police.active||ambushPatrols.some(p=>p.active)});
  if(!result.ok){notice(result.reason.toUpperCase());return;}
- if(!saveSideStats(localStorage,result.next)){notice('NO SE PUDO GUARDAR LA PISTA · SIN RECOMPENSA');return;}
+ if(!saveSideStats(storage,result.next)){notice('NO SE PUDO GUARDAR LA PISTA · SIN RECOMPENSA');return;}
  sideStats=result.next;updateSideMenu();refreshDiscoveryHUD();audio.cue('record');
  $('archiveMessage').textContent='ÚLTIMA PISTA · '+result.secret.title+' · +'+result.reward+' ₧';
  notice('DESCUBRIMIENTO · '+result.secret.title.toUpperCase()+' · +'+result.reward+' ₧');
@@ -211,26 +226,52 @@ let police=createPolice();
 let ambushPatrols=[];
 let pedestrian=makePedestrian();
 let renderer,car=createCar(),race=makeRace(),audio=new EngineAudio(),started=false,paused=true,helpOpen=false,toastTimeout,urbanMode=false;
-const settings=readSettings({getItem:k=>{try{return localStorage.getItem(k)}catch{return null}}});
+const settings=readSettings({getItem:k=>{try{return storage.getItem(k)}catch{return null}}});
 audio.setVolume(settings.audioVolume/100);
 const automaticQuality=new AutoQuality();let appliedScale=1, settingsOpen=false, settingsFocus=null;
-let effectsEnabled=(()=>{try{return localStorage.getItem('chase404.effects.v6')!=='off'}catch{return true}})();
-let lightingMode=readLighting({getItem:k=>localStorage.getItem(k)});
-let profile=(()=>{try{return readProfile(localStorage);}catch{return readProfile({getItem:()=>null});}})(),mode='arcade',runId='',cupResult=null,finishResolved=false;
+let effectsEnabled=(()=>{try{return storage.getItem('chase404.effects.v6')!=='off'}catch{return true}})();
+let lightingMode=readLighting({getItem:k=>storage.getItem(k)});
+let profile=(()=>{try{return readProfile(storage);}catch{return readProfile({getItem:()=>null});}})(),mode='arcade',runId='',cupResult=null,finishResolved=false;
 const qualityModes=[{name:'AUTO',id:'auto'},{name:'ALTA',id:'high'},{name:'MEDIA',id:'medium'},{name:'ECO',id:'eco'}];
 const inputs={throttle:false,brake:false,left:false,right:false,handbrake:false};
 const keymap=settings.bindings;
 const controls=new Controls(code=>actionForKey(code,keymap));
 function syncControls(){Object.assign(inputs,controls.snapshot());}
+
+function pollGamepad(){
+ let pad;
+ try{pad=readGamepad(navigator.getGamepads?.());}catch{}
+ if(!pad){
+  if(gamepadWasActive){gamepadActions={};gamepadWasActive=false;syncControls();}
+  return;
+ }
+ const previous=gamepadActions;
+ const active=gamepadWasActive;
+ gamepadActions=pad.actions;
+ gamepadWasActive=true;
+ syncControls();
+ const justPressed=action=>active&&pad.actions[action]&&!previous[action];
+ if(document.hidden||!document.hasFocus())return;
+ if(justPressed('pause')&&ui.finish.hidden){togglePause();return;}
+ if(justPressed('confirm')){
+  if(storyOpen){closeStoryBeat();return;}
+  if(ui.finish.hidden&&paused&&!ui.overlay.hidden&&!helpOpen&&!settingsOpen){unpause();return;}
+ }
+ if(paused||helpOpen||settingsOpen||storyOpen||!started)return;
+ if(justPressed('vehicle')){toggleVehicle();return;}
+ if(justPressed('camera'))camera();
+ const movement=pedestrian.active?pad.walking:pad.driving;
+ for(const action of Object.keys(movement))inputs[action]||=movement[action];
+}
 function notice(message){ui.notice.textContent=message;ui.notice.classList.add('show');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>ui.notice.classList.remove('show'),2300);}
 function recordKey(){return mode==='arcade'?`chase404.best.v4.${getTrack().id}.${$('carSelect').value}`:`chase404.bestlap.v5.${mode}.${getTrack().id}.${$('carSelect').value}`;}
-function readRecord(){try{const v=Number(localStorage.getItem(recordKey()));return v>0&&v<100000?v:null;}catch{return null;}}
-function saveRecord(t){try{localStorage.setItem(recordKey(),String(t));}catch{notice('EL NAVEGADOR NO PERMITE GUARDAR RÉCORDS');}}
+function readRecord(){try{const v=Number(storage.getItem(recordKey()));return v>0&&v<100000?v:null;}catch{return null;}}
+function saveRecord(t){try{storage.setItem(recordKey(),String(t));}catch{notice('EL NAVEGADOR NO PERMITE GUARDAR RÉCORDS');}}
 let savedBest=readRecord();
 const currentMode=()=>MODES.find(m=>m.id===mode)||MODES[0];
 const cupActive=()=>mode==='championship'&&profile.cup;
-const storageSave=()=>{let saved=false;try{saved=writeProfile(localStorage,profile);}catch{}if(!saved&&started)notice('NO SE PUDO GUARDAR EL PERFIL');};
-function initRace(){sideRun=sideMode()?newSideRun(selectedSideId):null;pedestrian=makePedestrian();mission=newMission(selectedChapter,selectedChapter===9?readRoute(localStorage):null,selectedChapter===15?finalChoiceForNextMission(sessionFinalChoice,readFinalChoice(localStorage)):null);streetTraffic=createTraffic();suspect=createSuspect();urbanElapsed=0;police=createPolice();ambushPatrols=[];car=urbanMode?createUrbanCar():createCar();car.vehicleId=getCar($('carSelect').value).id;car.tune=urbanMode?tuneWithUpgrades(car.vehicleId,sideStats):{...getCar(car.vehicleId).tune};renderer?.changeVehicle(car.vehicleId);race=makeRace({laps:currentMode().laps,rivals:currentMode().rivals});race.order=standings(race,car);race.position=race.order.find(e=>e.id==='YOU').position;runId=Date.now()+'-'+Math.random().toString(36).slice(2);cupResult=null;finishResolved=false;}
+const storageSave=()=>{let saved=false;try{saved=writeProfile(storage,profile);}catch{}if(!saved&&started)notice('NO SE PUDO GUARDAR EL PERFIL');};
+function initRace(){sideRun=sideMode()?newSideRun(selectedSideId):null;pedestrian=makePedestrian();mission=newMission(selectedChapter,selectedChapter===9?(sessionRoute??readRoute(storage)):null,selectedChapter===15?finalChoiceForNextMission(sessionFinalChoice,readFinalChoice(storage)):null);streetTraffic=createTraffic();suspect=createSuspect();urbanElapsed=0;police=createPolice();ambushPatrols=[];car=urbanMode?createUrbanCar():createCar();if(urbanMode&&!sideMode()&&!explorationMode())Object.assign(car,campaignStartPose(selectedChapter));car.vehicleId=getCar($('carSelect').value).id;car.tune=urbanMode?tuneWithUpgrades(car.vehicleId,sideStats):{...getCar(car.vehicleId).tune};renderer?.changeVehicle(car.vehicleId);race=makeRace({laps:currentMode().laps,rivals:currentMode().rivals});race.order=standings(race,car);race.position=race.order.find(e=>e.id==='YOU').position;runId=Date.now()+'-'+Math.random().toString(36).slice(2);cupResult=null;finishResolved=false;}
 /** Taller contextual: solo cuando Gael está junto a la entrada y no hay persecución. */
 function workshopAvailable(){const pos=pedestrian.active?pedestrian:car;return canUseWorkshop({urban:urbanMode,onFoot:pedestrian.active,x:pos.x,z:pos.z,speed:car.speed,policeActive:police.active||ambushPatrols.some(p=>p.active),vehicleX:car.x,vehicleZ:car.z});}
 function showWorkshop(){
@@ -243,7 +284,7 @@ function closeWorkshop(){if(!workshopOpen)return;workshopOpen=false;$('workshopO
 function workshopTransaction(result,message){
  if(!result.ok){$('workshopMessage').textContent=result.reason;return;}
  // Persist first; a blocked/full storage must never debit without keeping the transaction.
- if(!saveSideStats(localStorage,result.next)){$('workshopMessage').textContent='ERROR DE GUARDADO · NO SE HA COBRADO';return;}
+ if(!saveSideStats(storage,result.next)){$('workshopMessage').textContent='ERROR DE GUARDADO · NO SE HA COBRADO';return;}
  sideStats=result.next;
  if(result.damage===0){car.damage=0;car.damageCooldown=0;car.damageEvents=0;}
  car.tune=tuneWithUpgrades(car.vehicleId,sideStats);updateSideMenu();renderWorkshop();renderHUD();
@@ -279,13 +320,13 @@ function closeCollection(){if(!collectionOpen)return;collectionOpen=false;$('col
 function parkCurrentVehicle(){
  const proposal=parkVehicle(vehicleCollection,car);
  if(!proposal.ok){$('collectionMessage').textContent=proposal.reason;return;}
- if(!saveCollection(localStorage,proposal.next)){$('collectionMessage').textContent='ERROR DE GUARDADO · NINGÚN CAMBIO';return;}
+ if(!saveCollection(storage,proposal.next)){$('collectionMessage').textContent='ERROR DE GUARDADO · NINGÚN CAMBIO';return;}
  vehicleCollection=proposal.next;renderCollection();$('collectionMessage').textContent=proposal.updated?'ESTADO DEL VEHÍCULO ACTUALIZADO':'VEHÍCULO AÑADIDO A TU COLECCIÓN';
 }
 function takeStoredVehicle(id){
  const proposal=swapParkedVehicle(vehicleCollection,car,id);
  if(!proposal.ok){$('collectionMessage').textContent=proposal.reason;return;}
- if(!saveCollection(localStorage,proposal.next)){$('collectionMessage').textContent='ERROR DE GUARDADO · NO SE HA CAMBIADO DE COCHE';return;}
+ if(!saveCollection(storage,proposal.next)){$('collectionMessage').textContent='ERROR DE GUARDADO · NO SE HA CAMBIADO DE COCHE';return;}
  vehicleCollection=proposal.next;
  // Swap the active vehicle in place; the previous car's real damage is preserved.
  Object.assign(car,{vehicleId:id,damage:proposal.vehicle.damage,damageCooldown:0,damageEvents:0,speed:0,vx:0,vz:0,kmh:0,steer:0,wheel:0,wall:false,offroad:false});
@@ -321,7 +362,7 @@ function updateProfileUI(){
  $('metricCars').textContent=String(race.rivals.length+1).padStart(2,'0');$('metricLaps').textContent=Number.isFinite(race.laps)?String(race.laps).padStart(2,'0'):'∞';$('metricAI').textContent=race.rivals.length?'IA':'SOLO';
  if(urbanMode){$('modeDescription').textContent=explorationMode()?'EXPLORACIÓN LIBRE · pistas, talleres y garaje':sideMode()?selectedActivity().title+' · desafío secundario':missionChapter(selectedChapter).title+' · misión '+String(selectedChapter).padStart(2,'0');$('metricCars').textContent='01';$('metricLaps').textContent='∞';$('metricAI').textContent='MISIÓN';}
  $('modeTag').textContent=mode==='free'?'▰ VUELTAS ILIMITADAS · PRACTICA LIBRE':mode==='time'?'▰ TIME ATTACK · SIN RIVALES':mode==='championship'?'▰ WORLD CUP · 3 CIRCUITOS':'▰ 8 PILOTOS · 3 VUELTAS';
- $('modeHUD').textContent=mode==='championship'?'WORLD CUP · '+(cupTable(cup)?.round+1||1)+'/3':currentMode().name+' · '+(race.rivals.length+1)+' PILOTO(S)';
+ $('modeHUD').textContent=urbanMode?'BARCELONA · 1984':mode==='championship'?'WORLD CUP · '+(cupTable(cup)?.round+1||1)+'/3':currentMode().name+' · '+(race.rivals.length+1)+' PILOTO(S)';
  $('gapLabel').textContent=race.rivals.length?'SIGUIENTE COCHE':'OBJETIVO';
 }
 
@@ -337,15 +378,15 @@ function closeStoryBeat(){
  audio.pause(paused);if(storyFocus?.isConnected)storyFocus.focus();else $('pauseBtn').focus();storyFocus=null;
 }
 function clearControls(){controls.clear();syncControls();}
-function setPaused(value){paused=value;audio.pause(paused);ui.overlay.hidden=!paused;if(paused){clearControls();if(started){ui.introTitle.innerHTML='RACE<br><em>PAUSED.</em>';ui.start.innerHTML='CONTINUAR <span>↗</span>';}}$('pauseBtn').innerHTML=paused?'▶ <span>SEGUIR</span>':'Ⅱ <span>PAUSA</span>';}
+function setPaused(value){paused=value;audio.pause(paused);ui.overlay.hidden=!paused;if(paused){clearControls();if(started){ui.introTitle.innerHTML=urbanMode?'EL CARMEL<br><em>EN PAUSA.</em>':'CARRERA<br><em>EN PAUSA.</em>';ui.start.innerHTML='CONTINUAR <span>↗</span>';}}$('pauseBtn').innerHTML=paused?'▶ <span>SEGUIR</span>':'Ⅱ <span>PAUSA</span>';}
 function unpause(){
  if(mode==='championship'&&!profile.cup){beginCup(profile,$('carSelect').value);syncCupSelection();reset();updateProfileUI();savedBest=readRecord();}
  if(!started){recordStart(profile);storageSave();}
- started=true;hideHelp();setPaused(false);clearObjectivePresentation();activateUrbanRun({urbanMode,sideMode:sideMode(),explorationMode:explorationMode(),mission,sideRun,damageEvents:car.damageEvents});updateCampaignUI();audio.cue('start');notice(explorationMode()?'EXPLORACIÓN LIBRE · BUSCA LAS PLACAS DORADAS':sideMode()?('DESAFÍO · '+selectedActivity().title):urbanMode?('GAEL VERENNE · '+missionChapter(selectedChapter).title):mode==='free'?'FREE RUN · SIN LÍMITE':'GREEN LIGHT · GO!');
+ started=true;hideHelp();setPaused(false);activateUrbanRun({urbanMode,sideMode:sideMode(),explorationMode:explorationMode(),mission,sideRun,damageEvents:car.damageEvents});updateCampaignUI();audio.cue('start');notice(explorationMode()?'EXPLORACIÓN LIBRE · BUSCA LAS PLACAS DORADAS':sideMode()?('DESAFÍO · '+selectedActivity().title):urbanMode?('GAEL VERENNE · '+missionChapter(selectedChapter).title):mode==='free'?'FREE RUN · SIN LÍMITE':'GREEN LIGHT · GO!');
 }
 function showHelp(){if(helpOpen||storyOpen||contactOpen||archiveOpen||workshopOpen||collectionOpen||settingsOpen)return;helpOpen=true;clearControls();ui.help.hidden=false;audio.pause(true);}
 function hideHelp(){ui.help.hidden=true;helpOpen=false;audio.pause(paused);}
-function togglePause(){if(storyOpen){closeStoryBeat();return;}if(contactOpen){closeContactPanel();return;}if(archiveOpen){closeArchive();return;}if(collectionOpen){closeCollection();return;}if(workshopOpen){closeWorkshop();return;}if(settingsOpen){closeSettings();return;}if(helpOpen){hideHelp();return;}if(!started){unpause();return;}setPaused(!paused);}
+function togglePause(){if(storyOpen){closeStoryBeat();return;}if(contactOpen){closeContactPanel();return;}if(archiveOpen){closeArchive();return;}if(collectionOpen){closeCollection();return;}if(workshopOpen){closeWorkshop();return;}if(settingsOpen){closeSettings();return;}if(helpOpen){hideHelp();return;}if(!started){unpause();return;}if(paused)unpause();else setPaused(true);}
 function reset(){
  closeStoryBeat();clearObjectivePresentation();initRace();renderer.startCam=true;renderer.effects?.clear();ui.finish.hidden=true;
  if(started&&!paused)activateUrbanRun({urbanMode,sideMode:sideMode(),explorationMode:explorationMode(),mission,sideRun,damageEvents:car.damageEvents});
@@ -356,7 +397,7 @@ function restartRace(){if(mode==='championship'&&!profile.cup)beginCup(profile,$
 function backToGarage(){
  selectedChapter=campaign.nextChapter;sessionFinalChoice=null;sideSelected=false;freeExploration=false;updateSideMenu();
  if(cupActive())syncCupSelection();reset();updateProfileUI();started=false;paused=true;audio.pause(true);ui.finish.hidden=true;ui.overlay.hidden=false;
- ui.introTitle.innerHTML='CHOOSE<br>YOUR <em>RIDE.</em>';
+ ui.introTitle.innerHTML=urbanMode?'EL CARMEL<br><em>1984.</em>':'ELIGE<br>TU <em>COCHE.</em>';
  ui.start.innerHTML='INICIAR MOTOR <span>↗</span>';
  updateCampaignUI();
  clearControls();$('trackSelect').focus();
@@ -365,7 +406,7 @@ function updateCampaignUI(){
  const available=urbanMode&&(campaign.nextChapter>1||campaign.completed);
  $('newCampaignBtn').hidden=!available||started||sideMode()||explorationMode();
  $('campaignStatus').hidden=!urbanMode;
- $('campaignStatus').textContent=sideMode()?'DESAFÍO URBANO · NO ALTERA LA CAMPAÑA':explorationMode()?'EXPLORACIÓN LIBRE · SIN RELOJ':campaign.completed?'CAMPAÑA COMPLETADA · REPITE LA MISIÓN FINAL O INICIA UNA NUEVA':available?(campaignSaveOk?'PROGRESO GUARDADO':'SOLO EN ESTA SESIÓN')+' · CONTINUAR MISIÓN '+String(selectedChapter).padStart(2,'0'):'CAMPAÑA · MISIÓN 01';
+ $('campaignStatus').textContent=sideMode()?'DESAFÍO URBANO · NO ALTERA LA CAMPAÑA':explorationMode()?'EXPLORACIÓN LIBRE · SIN RELOJ':campaign.completed?'CAMPAÑA COMPLETADA · REPITE LA MISIÓN FINAL O INICIA UNA NUEVA':available?(campaignSaveOk?'PROGRESO GUARDADO':'SOLO EN ESTA SESIÓN')+' · CONTINUAR MISIÓN '+String(selectedChapter).padStart(2,'0'):(campaignSaveOk?'CAMPAÑA · MISIÓN 01':'MISIÓN 01 · GUARDADO NO DISPONIBLE');
  if(urbanMode){
   document.querySelector('.intro-index b').textContent=sideMode()?'DESAFÍO':explorationMode()?'LIBRE':'MISIÓN '+String(selectedChapter).padStart(2,'0');
   document.querySelector('.topline span:last-child').textContent=sideMode()?selectedActivity().title:explorationMode()?'EXPLORACIÓN LIBRE':'MISIÓN '+String(selectedChapter).padStart(2,'0')+' · '+missionChapter(selectedChapter).title;
@@ -376,10 +417,10 @@ function updateCampaignUI(){
 function newCampaign(){
  if(started||!urbanMode)return;
  try{
-  localStorage.setItem(CAMPAIGN_PROGRESS_KEY,JSON.stringify(freshCampaign()));
-  localStorage.removeItem(ROUTE_KEY);localStorage.removeItem(FINAL_CHOICE_KEY);
+  storage.setItem(CAMPAIGN_PROGRESS_KEY,JSON.stringify(freshCampaign()));
+  storage.removeItem(ROUTE_KEY);storage.removeItem(FINAL_CHOICE_KEY);
  }catch{notice('NO SE PUDO REINICIAR LA CAMPAÑA · ALMACENAMIENTO BLOQUEADO');return;}
- campaign=freshCampaign();campaignSaveOk=true;selectedChapter=1;sessionFinalChoice=null;sideSelected=false;freeExploration=false;
+ campaign=freshCampaign();campaignSaveOk=true;selectedChapter=1;sessionFinalChoice=null;sessionRoute=null;sideSelected=false;freeExploration=false;
  reset();updateSideMenu();updateCampaignUI();renderHUD();notice('NUEVA CAMPAÑA · MISIÓN 01');
 }
 function finishRace(){
@@ -418,7 +459,7 @@ function sideEnd(state,reason=''){
  const proposedRun={...sideRun};
  let stored=false;
  if(won&&awardSideRun(next,proposedRun)){
-  stored=saveSideStats(localStorage,next);
+  stored=saveSideStats(storage,next);
   if(stored){sideStats=next;sideRun.claimed=true;}
  }
  paused=true;started=false;finishResolved=true;clearControls();audio.pause(true);ui.overlay.hidden=true;ui.finish.hidden=false;
@@ -472,11 +513,11 @@ function cycleLighting(){
  if(helpOpen||settingsOpen||contactOpen||archiveOpen||collectionOpen||workshopOpen)return;
  if(!urbanMode){notice('ILUMINACIÓN · DISPONIBLE EN BARCELONA');return;}
  lightingMode=nextLighting(lightingMode);applyLighting();
- if(!saveLighting({setItem:(k,v)=>localStorage.setItem(k,v)},lightingMode))notice('ILUMINACIÓN '+getLighting(lightingMode).label+' · NO SE PUDO GUARDAR');
+ if(!saveLighting({setItem:(k,v)=>storage.setItem(k,v)},lightingMode))notice('ILUMINACIÓN '+getLighting(lightingMode).label+' · NO SE PUDO GUARDAR');
  else notice('ILUMINACIÓN · '+getLighting(lightingMode).label);
 }
 function effectiveReducedMotion(){return settings.reducedMotion||Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);}
-function persistSettings(){let ok=false;try{ok=saveSettings(localStorage,settings);}catch{}if(!ok)notice('AJUSTES NO GUARDADOS: ALMACENAMIENTO BLOQUEADO');}
+function persistSettings(){let ok=false;try{ok=saveSettings(storage,settings);}catch{}if(!ok)notice('AJUSTES NO GUARDADOS: ALMACENAMIENTO BLOQUEADO');}
 function quality(){const i=qualityModes.findIndex(x=>x.id===settings.quality);settings.quality=qualityModes[(i+1)%qualityModes.length].id;applyQuality();persistSettings();notice('GRÁFICOS · '+settings.quality.toUpperCase());}
 function applyQuality(){
  if(settings.quality==='auto')automaticQuality.reset();
@@ -512,9 +553,37 @@ function commitSettings(){
  automaticQuality.reset();appliedScale=-1;applyQuality();persistSettings();closeSettings();notice('AJUSTES DE ACCESIBILIDAD APLICADOS');
 }
 
-function effects(){effectsEnabled=!effectsEnabled;renderer.setEffectsEnabled(effectsEnabled&&!effectiveReducedMotion());$('fxBtn').setAttribute('aria-pressed',String(effectsEnabled));$('fxBtn').innerHTML=effectsEnabled?'✦ <span>FX ON</span>':'✧ <span>FX OFF</span>';try{localStorage.setItem('chase404.effects.v6',effectsEnabled?'on':'off')}catch{}notice(effectsEnabled?'EFECTOS VISUALES ACTIVADOS':'EFECTOS VISUALES DESACTIVADOS');}
+function effects(){effectsEnabled=!effectsEnabled;renderer.setEffectsEnabled(effectsEnabled&&!effectiveReducedMotion());$('fxBtn').setAttribute('aria-pressed',String(effectsEnabled));$('fxBtn').innerHTML=effectsEnabled?'✦ <span>FX ON</span>':'✧ <span>FX OFF</span>';try{storage.setItem('chase404.effects.v6',effectsEnabled?'on':'off')}catch{}notice(effectsEnabled?'EFECTOS VISUALES ACTIVADOS':'EFECTOS VISUALES DESACTIVADOS');}
 async function sound(){try{const on=await audio.toggle();$('soundBtn').setAttribute('aria-pressed',String(on));$('soundBtn').innerHTML=on?'♫ <span>AUDIO ON</span>':'♫ <span>AUDIO OFF</span>';audio.pause(paused||helpOpen||settingsOpen||archiveOpen||contactOpen||collectionOpen||workshopOpen);}catch(e){notice(e.message.toUpperCase());}}
 const ctx=ui.minimap.getContext('2d');
+function drawNavigation(target,actor,loc){
+ const now=performance.now();
+ if(target&&target.kind!=='branch'){
+  if(!navigationCache||navigationCache.target!==target||now>=navigationCache.until){
+   navigationCache={target,until:now+450,points:roadPath(actor.x,actor.z,target.x,target.z)};
+  }
+  if(navigationCache.points.length>1){
+   ctx.strokeStyle='#402e28';ctx.lineWidth=6;ctx.beginPath();
+   navigationCache.points.forEach((point,index)=>{
+    const [x,y]=loc([point.x,point.z]);
+    if(index)ctx.lineTo(x,y);else ctx.moveTo(x,y);
+   });
+   ctx.stroke();ctx.strokeStyle='#ffd47a';ctx.lineWidth=3;ctx.stroke();
+  }
+ }
+ for(const patrol of [police,...ambushPatrols]){
+  if(!patrol.active)continue;
+  ctx.fillStyle='#ff826d';ctx.beginPath();ctx.arc(...loc([patrol.agent.x,patrol.agent.z]),4,0,Math.PI*2);ctx.fill();
+ }
+}
+
+function drawHeading(actor,loc){
+ const [x,y]=loc([actor.x,actor.z]);
+ ctx.save();ctx.translate(x,y);ctx.rotate(-actor.yaw);ctx.beginPath();
+ ctx.moveTo(0,7);ctx.lineTo(-4.5,-5);ctx.lineTo(0,-3);ctx.lineTo(4.5,-5);ctx.closePath();
+ ctx.strokeStyle='#201911';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#fff0bc';ctx.fill();ctx.restore();
+}
+
 function drawMap(){
  const c=ui.minimap,w=c.width,h=c.height,pad=20;
  if(urbanMode){ctx.clearRect(0,0,w,h);ctx.fillStyle='#243c3a';ctx.fillRect(0,0,w,h);const pts=CITY.streets.flat(),xs=pts.map(p=>p[0]),zs=pts.map(p=>p[1]),minX=Math.min(...xs)-28,maxX=Math.max(...xs)+28,minZ=Math.min(...zs)-28,maxZ=Math.max(...zs)+28,scale=Math.min((w-pad*2)/(maxX-minX),(h-pad*2)/(maxZ-minZ)),loc=p=>[w/2+(p[0]-(minX+maxX)/2)*scale,h/2+(p[1]-(minZ+maxZ)/2)*scale];ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#d5c3a2';ctx.lineWidth=6;for(const road of CITY.streets){ctx.beginPath();road.forEach((p,i)=>i?ctx.lineTo(...loc(p)):ctx.moveTo(...loc(p)));ctx.stroke();}ctx.fillStyle='#e6d19c';ctx.font='bold 10px monospace';ctx.fillText('BARCELONA · 1984',7,13);ctx.fillStyle='#84ebd1';ctx.fillRect(...loc([WORKSHOP.x,WORKSHOP.z]).map(n=>n-3),6,6);ctx.fillStyle='#e9b97b';ctx.fillRect(...loc([CARMEL_GARAGE.x,CARMEL_GARAGE.z]).map(n=>n-4),8,8);
@@ -523,7 +592,9 @@ function drawMap(){
   if(stage==='active'){const [ex,ey]=loc([npc.location.x,npc.location.z]);ctx.fillStyle='#ffb86f';ctx.beginPath();ctx.arc(ex,ey,5,0,Math.PI*2);ctx.fill();ctx.stroke();}
  }
  const found=new Set(cleanDiscoveries(sideStats.discoveries));
- for(const spot of DISCOVERIES){const [sx,sy]=loc([spot.x,spot.z]);ctx.fillStyle=found.has(spot.id)?'#608a80':'#f4cd73';ctx.strokeStyle='#17282f';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(sx,sy,found.has(spot.id)?2.5:4.1,0,Math.PI*2);ctx.fill();ctx.stroke();}const target=explorationMode()?null:sideMode()?sideTarget(sideRun):missionTarget(mission);if(target?.kind==='branch'){for(const option of target.alternatives){ctx.fillStyle='#ff8060';ctx.strokeStyle='#fff0c5';ctx.lineWidth=2;ctx.beginPath();ctx.arc(...loc([option.x,option.z]),6,0,Math.PI*2);ctx.fill();ctx.stroke();}}else if(target){ctx.fillStyle='#ff8060';ctx.strokeStyle='#fff0c5';ctx.lineWidth=2;ctx.beginPath();ctx.arc(...loc([target.x,target.z]),6,0,Math.PI*2);ctx.fill();ctx.stroke();}ctx.fillStyle='#ffd47a';ctx.beginPath();ctx.arc(...loc([pedestrian.active?pedestrian.x:car.x,pedestrian.active?pedestrian.z:car.z]),5,0,Math.PI*2);ctx.fill();return;}
+ for(const spot of DISCOVERIES){const [sx,sy]=loc([spot.x,spot.z]);ctx.fillStyle=found.has(spot.id)?'#608a80':'#f4cd73';ctx.strokeStyle='#17282f';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(sx,sy,found.has(spot.id)?2.5:4.1,0,Math.PI*2);ctx.fill();ctx.stroke();}const target=explorationMode()?null:sideMode()?sideTarget(sideRun):missionTarget(mission);const actor=pedestrian.active?pedestrian:car;
+ drawNavigation(target?.kind==='tail'&&suspect.active?suspect:target,actor,loc);
+ if(target?.kind==='branch'){for(const option of target.alternatives){ctx.fillStyle='#ff8060';ctx.strokeStyle='#fff0c5';ctx.lineWidth=2;ctx.beginPath();ctx.arc(...loc([option.x,option.z]),6,0,Math.PI*2);ctx.fill();ctx.stroke();}}else if(target){ctx.fillStyle='#ff8060';ctx.strokeStyle='#fff0c5';ctx.lineWidth=2;ctx.beginPath();ctx.arc(...loc(target.kind==='tail'&&suspect.active?[suspect.x,suspect.z]:[target.x,target.z]),6,0,Math.PI*2);ctx.fill();ctx.stroke();}drawHeading(actor,loc);return;}
  const ps=Array.from({length:200},(_,i)=>sample(LENGTH*i/200));
  const minX=Math.min(...ps.map(p=>p.x)),maxX=Math.max(...ps.map(p=>p.x));
  const minZ=Math.min(...ps.map(p=>p.z)),maxZ=Math.max(...ps.map(p=>p.z));
@@ -560,11 +631,11 @@ function changeSelection(){
  renderer.setUrbanMode(urbanMode);if(!urbanMode)renderer.changeTrack();renderer.changeVehicle(selected.id);
  initRace();
  savedBest=readRecord();started=false;paused=true;clearControls();ui.finish.hidden=true;ui.overlay.hidden=false;
- ui.introTitle.innerHTML='CHOOSE<br>YOUR <em>RIDE.</em>';
+ ui.introTitle.innerHTML=urbanMode?'EL CARMEL<br><em>1984.</em>':'ELIGE<br>TU <em>COCHE.</em>';
  ui.start.innerHTML='INICIAR MOTOR <span>↗</span>';
  $('pauseBtn').innerHTML='▶ <span>SEGUIR</span>';
  updateSelectionUI();updateProfileUI();renderHUD();
- try{localStorage.setItem('chase404.track.v4',chosen);localStorage.setItem('chase404.car.v4',selected.id);}catch{}
+ try{storage.setItem('chase404.track.v4',chosen);storage.setItem('chase404.car.v4',selected.id);}catch{}
  notice(urbanMode?`EL CARMEL · ${selected.name}`:`PARRILLA · ${getTrack().name} · ${selected.name}`);
 }
 function renderMissionReport(won){
@@ -575,14 +646,25 @@ function renderMissionReport(won){
  for(const [name,value] of entries){const row=document.createElement('div');row.className='finish-row';const label=document.createElement('span');label.textContent=name;const strong=document.createElement('b');strong.textContent=value;row.append(label,strong);ui.finishBoard.append(row);}
  const message=document.createElement('p');message.className='mission-report-summary';message.textContent=report.summary;ui.finishBoard.append(message);
 }
-function missionEnd(won,{captured=false}={}){clearObjectivePresentation();if(won&&selectedChapter===14&&mission.finalChoice&&!writeFinalChoice(localStorage,mission.finalChoice))notice('NO SE PUDO GUARDAR LA DECISIÓN FINAL');if(won&&selectedChapter===8&&mission.routeChoice&&!writeRoute(localStorage,mission.routeChoice))notice('NO SE PUDO GUARDAR LA DECISIÓN DE RUTA');if(won){campaign=advanceCampaign(campaign,selectedChapter);campaignSaveOk=writeCampaign(localStorage,campaign);if(!campaignSaveOk)notice('NO SE PUDO GUARDAR EL AVANCE · CONTINÚA EN ESTA SESIÓN');}paused=true;started=false;clearControls();audio.pause(true);ui.overlay.hidden=true;ui.finish.hidden=false;ui.finishTitle.textContent=missionFailureTitle({won,captured,chapter:selectedChapter,tailLost:mission.tailLost});ui.finishPosition.textContent=won?'MISIÓN '+String(selectedChapter).padStart(2,'0')+' / OK':'MISIÓN '+String(selectedChapter).padStart(2,'0')+' / FALLO';ui.finishTime.textContent=formatTime(mission.elapsed);$('finishSelection').textContent='GAEL VERENNE · EL CARMEL · OCTUBRE 1984';ui.finishBoard.replaceChildren();renderMissionReport(won);$('rewardReport').textContent=won?(selectedChapter===15?(mission.finalChoice==='RECUPERAR LAS PRUEBAS'?'Gael salva a su hermano y presenta las pruebas contra Salvat. Clara confirma su detención. Barcelona conserva cicatrices, pero los dos hermanos salen juntos. FIN · LA VERDAD.':'Gael recupera las pruebas que faltaban y encara a Salvat. Su hermano está a salvo, aunque parte de la red consigue escapar. FIN · LA FAMILIA.') :selectedChapter===14?(mission.finalChoice==='RESCATAR A MI HERMANO'?'Gael rescata a su hermano, pero Salvat todavía conserva pruebas comprometedoras. La persecución final será más peligrosa.':'Gael reúne pruebas decisivas contra Salvat, pero su hermano sigue retenido. El rescate quedará para la última noche.') :selectedChapter===13?'El expediente y la grabación identifican a Víctor Salvat, inspector corrupto que dirige los traslados clandestinos. El hermano de Gael sigue retenido y el próximo movimiento será decisivo.':selectedChapter===12?'El testigo ha identificado un registro oculto en el Eixample. Gael recupera un código que apunta a un traslado nocturno de su hermano desde el puerto.':selectedChapter===11?'Gael saca con vida al testigo del almacén. El rescate confirma que la red criminal conoce su siguiente movimiento.':selectedChapter===10?'Clara revela que el inspector utiliza el almacén 04 como tapadera. El hermano de Gael fue trasladado, pero sigue vivo.':selectedChapter===9?'La declaración vincula a un inspector con el convoy. Gael sabe ahora a quién buscar.':selectedChapter===8?'Gael escapó por '+(mission.routeChoice||'una calle secundaria')+'. La emboscada confirma que hay policías comprados.':selectedChapter===7?'Gael ha memorizado la matrícula del sedán gris. El convoy cambia sus rutas cada noche.':selectedChapter===6?'Gael escucha la conversación y descubre que la organización prepara un traslado clandestino. Su hermano podría seguir vivo.':selectedChapter===5?'En el mirador, Gael identifica al hombre que ordenó la desaparición de su hermano. La cinta era solo el principio.':selectedChapter===4?'En el almacén, Gael descubre una lista de matrículas y una cita al anochecer en Montjuïc.':selectedChapter===3?'La entrega revela la conexión entre las avenidas y los almacenes del puerto.':selectedChapter===2?'El contacto de Gràcia confirma que la cinta señala una operación en el puerto.':'Gael ha entregado la cinta. Una voz al otro lado del teléfono conoce su nombre.'):'El contacto se ha marchado. Gael tendrá que intentarlo de nuevo.';$('restartRaceBtn').hidden=false;$('nextCupBtn').hidden=!(won&&selectedChapter<15);$('nextCupBtn').textContent=selectedChapter===1?'MISIÓN 02 · GRÀCIA ↗':selectedChapter===2?'MISIÓN 03 · EIXAMPLE ↗':selectedChapter===3?'MISIÓN 04 · PUERTO ↗':selectedChapter===4?'MISIÓN 05 · MONTJUÏC ↗':selectedChapter===5?'MISIÓN 06 · VIGILANCIA ↗':selectedChapter===6?'MISIÓN 07 · SEGUIMIENTO ↗':selectedChapter===7?'MISIÓN 08 · EMBOSCADA ↗':selectedChapter===8?'MISIÓN 09 · TESTIGOS ↗':selectedChapter===9?'MISIÓN 10 · CLARA ↗':selectedChapter===10?'MISIÓN 11 · RESCATE ↗':selectedChapter===11?'MISIÓN 12 · ARCHIVO ↗':selectedChapter===12?'MISIÓN 13 · LA CINTA ↗':selectedChapter===13?'MISIÓN 14 · DECISIÓN ↗':'MISIÓN 15 · FINAL ↗';$('restartRaceBtn').textContent='REPETIR MISIÓN ↗';$('backToGarageBtn').textContent='VOLVER AL GARAJE ↗';}
+function missionEnd(won,{captured=false}={}){clearObjectivePresentation();if(won&&selectedChapter===14&&mission.finalChoice&&!writeFinalChoice(storage,mission.finalChoice))notice('NO SE PUDO GUARDAR LA DECISIÓN FINAL');if(won&&selectedChapter===8&&mission.routeChoice){sessionRoute=mission.routeChoice;if(!writeRoute(storage,sessionRoute))notice('NO SE PUDO GUARDAR LA DECISIÓN DE RUTA');}if(won){campaign=advanceCampaign(campaign,selectedChapter);campaignSaveOk=writeCampaign(storage,campaign);if(!campaignSaveOk)notice('NO SE PUDO GUARDAR EL AVANCE · CONTINÚA EN ESTA SESIÓN');}paused=true;started=false;clearControls();audio.pause(true);ui.overlay.hidden=true;ui.finish.hidden=false;ui.finishTitle.textContent=missionFailureTitle({won,captured,chapter:selectedChapter,tailLost:mission.tailLost});ui.finishPosition.textContent=won?'MISIÓN '+String(selectedChapter).padStart(2,'0')+' / OK':'MISIÓN '+String(selectedChapter).padStart(2,'0')+' / FALLO';ui.finishTime.textContent=formatTime(mission.elapsed);$('finishSelection').textContent='GAEL VERENNE · EL CARMEL · OCTUBRE 1984';ui.finishBoard.replaceChildren();renderMissionReport(won);$('rewardReport').textContent=won?(selectedChapter===15?(mission.finalChoice==='RECUPERAR LAS PRUEBAS'?'Gael salva a su hermano y presenta las pruebas contra Salvat. Clara confirma su detención. Barcelona conserva cicatrices, pero los dos hermanos salen juntos. FIN · LA VERDAD.':'Gael recupera las pruebas que faltaban y encara a Salvat. Su hermano está a salvo, aunque parte de la red consigue escapar. FIN · LA FAMILIA.') :selectedChapter===14?(mission.finalChoice==='RESCATAR A MI HERMANO'?'Gael rescata a su hermano, pero Salvat todavía conserva pruebas comprometedoras. La persecución final será más peligrosa.':'Gael reúne pruebas decisivas contra Salvat, pero su hermano sigue retenido. El rescate quedará para la última noche.') :selectedChapter===13?'El expediente y la grabación identifican a Víctor Salvat, inspector corrupto que dirige los traslados clandestinos. El hermano de Gael sigue retenido y el próximo movimiento será decisivo.':selectedChapter===12?'El testigo ha identificado un registro oculto en el Eixample. Gael recupera un código que apunta a un traslado nocturno de su hermano desde el puerto.':selectedChapter===11?'Gael saca con vida al testigo del almacén. El rescate confirma que la red criminal conoce su siguiente movimiento.':selectedChapter===10?'Clara revela que el inspector utiliza el almacén 04 como tapadera. El hermano de Gael fue trasladado, pero sigue vivo.':selectedChapter===9?'La declaración vincula a un inspector con el convoy. Gael sabe ahora a quién buscar.':selectedChapter===8?'Gael escapó por '+(mission.routeChoice||'una calle secundaria')+'. La emboscada confirma que hay policías comprados.':selectedChapter===7?'Gael ha memorizado la matrícula del sedán gris. El convoy cambia sus rutas cada noche.':selectedChapter===6?'Gael escucha la conversación y descubre que la organización prepara un traslado clandestino. Su hermano podría seguir vivo.':selectedChapter===5?'En el mirador, Gael identifica al hombre que ordenó la desaparición de su hermano. La cinta era solo el principio.':selectedChapter===4?'En el almacén, Gael descubre una lista de matrículas y una cita al anochecer en Montjuïc.':selectedChapter===3?'La entrega revela la conexión entre las avenidas y los almacenes del puerto.':selectedChapter===2?'El contacto de Gràcia confirma que la cinta señala una operación en el puerto.':'Gael ha entregado la cinta. Una voz al otro lado del teléfono conoce su nombre.'):'El contacto se ha marchado. Gael tendrá que intentarlo de nuevo.';$('restartRaceBtn').hidden=false;$('nextCupBtn').hidden=!(won&&selectedChapter<15);$('nextCupBtn').textContent=selectedChapter===1?'MISIÓN 02 · GRÀCIA ↗':selectedChapter===2?'MISIÓN 03 · EIXAMPLE ↗':selectedChapter===3?'MISIÓN 04 · PUERTO ↗':selectedChapter===4?'MISIÓN 05 · MONTJUÏC ↗':selectedChapter===5?'MISIÓN 06 · VIGILANCIA ↗':selectedChapter===6?'MISIÓN 07 · SEGUIMIENTO ↗':selectedChapter===7?'MISIÓN 08 · EMBOSCADA ↗':selectedChapter===8?'MISIÓN 09 · TESTIGOS ↗':selectedChapter===9?'MISIÓN 10 · CLARA ↗':selectedChapter===10?'MISIÓN 11 · RESCATE ↗':selectedChapter===11?'MISIÓN 12 · ARCHIVO ↗':selectedChapter===12?'MISIÓN 13 · LA CINTA ↗':selectedChapter===13?'MISIÓN 14 · DECISIÓN ↗':'MISIÓN 15 · FINAL ↗';$('restartRaceBtn').textContent='REPETIR MISIÓN ↗';$('backToGarageBtn').textContent='VOLVER AL GARAJE ↗';}
 function renderHUD(){refreshDiscoveryHUD();refreshContactHUD();
- const listener=pedestrian.active?pedestrian:car;const district=soundDistrictAt(listener.x,listener.z,urbanMode);$('districtLabel').textContent=urbanMode?SOUND_DISTRICTS[district]+' · 1984':'ARCADE · 1984';ui.speed.textContent=pedestrian.active?'PIE':String(car.kmh).padStart(3,'0');ui.fill.style.width=(Math.min(100,car.kmh/((car.urban?35:73)*car.tune.topSpeed*3.6)*100)).toFixed(1)+'%';ui.gear.textContent=car.speed<-.3?'R':car.kmh<2?'N':Math.min(5,Math.floor(car.kmh/50)+1);ui.clock.textContent=urbanMode?formatTime(explorationMode()?urbanElapsed:sideMode()?sideRun.remaining:mission.remaining):formatTime(car.lapTime);ui.lap.textContent=String(car.lap).padStart(2,'0');ui.best.textContent=formatTime(savedBest??car.best);ui.last.textContent=formatTime(car.lastLap);ui.sector.textContent=String(car.gate+1).padStart(2,'0')+' / 04';ui.surface.textContent=car.wall?'BARRERA':car.offroad?'GRAVA':slipstream(race,car)>.4?'REBUFO':'ASFALTO';ui.surface.style.color=car.offroad||car.wall?'#ffc181':'#fff';ui.fps.textContent=renderer.fps?renderer.fps+' FPS':'-- FPS';ui.model.textContent=(renderer.modelSource==='GLB'?'GLB · ':'3D · ')+getCar(urbanMode?car.vehicleId:$('carSelect').value).name;ui.model.title=renderer.modelError||'Modelo local sin dependencias de red';
+ const walking=pedestrian.active;
+ if($('app').dataset.onFoot!==String(walking)){
+ $('app').dataset.onFoot=String(walking);
+ $('touchGas').textContent=walking?'AVANZAR':'GAS';
+ $('touchBrake').textContent=walking?'ATRÁS':'FRENO';
+ $('touchSprint').textContent=walking?'CORRER':'DERRAPE';
+ $('touchGas').setAttribute('aria-label',walking?'Avanzar':'Acelerar');
+ $('touchBrake').setAttribute('aria-label',walking?'Retroceder':'Frenar o dar marcha atrás');
+ $('touchSprint').setAttribute('aria-label',walking?'Correr':'Freno de mano');
+ }
+ const listener=walking?pedestrian:car;const district=soundDistrictAt(listener.x,listener.z,urbanMode);$('districtLabel').textContent=urbanMode?SOUND_DISTRICTS[district]+' · 1984':'ARCADE · 1984';ui.speed.textContent=pedestrian.active?'PIE':String(car.kmh).padStart(3,'0');ui.fill.style.width=(Math.min(100,car.kmh/((car.urban?35:73)*car.tune.topSpeed*3.6)*100)).toFixed(1)+'%';ui.gear.textContent=car.speed<-.3?'R':car.kmh<2?'N':Math.min(5,Math.floor(car.kmh/50)+1);ui.clock.textContent=urbanMode?formatTime(explorationMode()?urbanElapsed:sideMode()?sideRun.remaining:mission.remaining):formatTime(car.lapTime);ui.lap.textContent=String(car.lap).padStart(2,'0');ui.best.textContent=formatTime(savedBest??car.best);ui.last.textContent=formatTime(car.lastLap);ui.sector.textContent=String(car.gate+1).padStart(2,'0')+' / 04';ui.surface.textContent=car.wall?'BARRERA':car.offroad?'GRAVA':slipstream(race,car)>.4?'REBUFO':'ASFALTO';ui.surface.style.color=car.offroad||car.wall?'#ffc181':'#fff';ui.fps.textContent=renderer.fps?renderer.fps+' FPS':'-- FPS';ui.model.textContent=(renderer.modelSource==='GLB'?'GLB · ':'3D · ')+getCar(urbanMode?car.vehicleId:$('carSelect').value).name;ui.model.title=renderer.modelError||'Modelo local sin dependencias de red';
  updateObjectivePresentation();if(urbanMode){$('workshopHint').hidden=!workshopAvailable();$('collectionHint').hidden=!collectionAvailable();const condition=damageCondition(car);$('vehicleHealth').textContent=condition.health+'%';$('vehicleHealth').style.color=condition.health<35?'#ff897e':condition.health<70?'#ffd18a':'#b6efc5';const damageCue=damageFeedback(car);const threatCue=pursuitThreat([police,...ambushPatrols],pedestrian.active?pedestrian:car);const warning=$('dangerIndicator');warning.hidden=damageCue.level==='good'&&threatCue.level==='none';warning.dataset.level=threatCue.level==='critical'||damageCue.level==='critical'?'critical':threatCue.level==='high'||damageCue.level==='high'?'high':'info';warning.textContent=threatCue.level!=='none'?threatCue.label+(damageCue.level!=='good'?' · '+damageCue.health+'% MOTOR':''):damageCue.label;const target=explorationMode()?null:sideMode()?sideTarget(sideRun):missionTarget(mission);$('missionHUD').hidden=false;$('missionObjective').title=pedestrian.active?'A PIE · E para subir al coche más cercano':'E para salir del coche cuando esté detenido';$('missionHUD').querySelector('strong').textContent=explorationMode()?'EXPLORACIÓN · BARCELONA 1984':sideMode()?selectedActivity().title:missionChapter(selectedChapter).title;$('missionObjective').textContent=explorationMode()?'EXPLORA PISTAS (X) Y HABLA CON MANEL, CLARA O NÚRIA (N) · DIARIO: J':target?`${sideMode()?sideRun.index+1:mission.index+1}/${sideMode()?selectedActivity().points.length:missionChapter(selectedChapter).points.length} · ${sideMode()?'Control: '+target.name:target.text}${['stakeout','tail','evade','contact','rescue','investigate','extract','decision','precision-drive'].includes(target.kind)?' ('+Math.floor(mission.holdProgress)+'/'+target.hold+' s)':''}`:(sideMode()?sideRun.phase:mission.phase)==='won'?'OBJETIVO COMPLETADO':(sideMode()?sideRun.phase:mission.phase)==='lost'?'OBJETIVO FALLIDO':'Preparando misión';$('missionDistance').textContent=explorationMode()?discoveryProgress(sideStats).count+' / '+DISCOVERIES.length+' PISTAS':target?(target.kind==='tail'?Math.round(Math.hypot((pedestrian.active?pedestrian:car).x-suspect.x,(pedestrian.active?pedestrian:car).z-suspect.z)):sideMode()?Math.round(Math.hypot((pedestrian.active?pedestrian:car).x-target.x,(pedestrian.active?pedestrian:car).z-target.z)):missionDistance(mission,pedestrian.active?pedestrian:car))+' m'+(police.active?' · POLICÍA EN PERSECUCIÓN':police.heat>0?' · ALERTA':''):'--';}else $('missionHUD').hidden=true;
  ui.position.textContent=String(race.position).padStart(2,'0');ui.positionTotal.textContent=String(race.rivals.length+1).padStart(2,'0');
  ui.raceLap.textContent=String(Math.min(Number.isFinite(race.laps)?race.laps:99,car.lap)).padStart(2,'0');ui.raceLaps.textContent=Number.isFinite(race.laps)?String(race.laps).padStart(2,'0'):'∞';
  ui.raceClock.textContent=formatTime(race.elapsed);
  const gap=positionDelta(race,car);ui.gap.textContent=!race.rivals.length?(mode==='free'?'LIBRE':'MEJOR TIEMPO'):gap===null?'LÍDER':Math.round(gap)+' m';
+ if(!urbanMode){
  ui.list.replaceChildren();
  for(const item of race.order.slice(0,8)){
   const row=document.createElement('div');row.className='leader-row'+(item.id==='YOU'?' is-you':'');
@@ -591,6 +673,7 @@ function renderHUD(){refreshDiscoveryHUD();refreshContactHUD();
   const state=document.createElement('small');state.textContent=item.finishTime!==null?'META':item.id==='YOU'?String(car.kmh)+' km/h':Math.round(race.rivals.find(r=>r.id===item.id).kmh)+' km/h';
   row.append(pos,name,state);ui.list.append(row);
  }
+ }
  drawMap();}
 function toggleVehicle(){
  if(!urbanMode||!started||paused||helpOpen||contactOpen||archiveOpen||workshopOpen||collectionOpen||settingsOpen)return;
@@ -598,8 +681,9 @@ function toggleVehicle(){
   if(v){car.tune=tuneWithUpgrades(car.vehicleId,sideStats);renderer.changeVehicle(car.vehicleId);}
   notice(v?'GAEL · '+getCar(car.vehicleId).name+' · VEHÍCULO RECUPERADO':'ACÉRCATE A UN VEHÍCULO DETENIDO');
  }else{
-  notice(exitVehicle(pedestrian,car,[...streetTraffic,...(police.active?[police.agent]:[]),...ambushPatrols.filter(p=>p.active).map(p=>p.agent)])?'GAEL · A PIE · WASD SEGÚN CÁMARA · ESPACIO CORRER · C RECENTRAR · E SUBIR':'DETÉN EL COCHE ANTES DE BAJAR');
+  notice(exitVehicle(pedestrian,car,[...streetTraffic,...(police.active?[police.agent]:[]),...ambushPatrols.filter(p=>p.active).map(p=>p.agent)])?'GAEL · A PIE · WASD SEGÚN CÁMARA · ESPACIO CORRER · C RECENTRAR · E SUBIR':Math.abs(car.speed)>.8?'DETÉN EL COCHE ANTES DE BAJAR':'SALIDA BLOQUEADA · APARCA CON ESPACIO PARA ABRIR LA PUERTA');
  }
+ if(!pedestrian.active&&Math.abs(car.speed)>.8)return;
  renderer.startCam=true;clearControls();renderHUD();
 }
 function attachTouch(id,key){const el=$(id);el.addEventListener('pointerdown',e=>{e.preventDefault();try{el.setPointerCapture(e.pointerId);}catch{}controls.pointerDown(e.pointerId,key);syncControls();});for(const ev of ['pointerup','pointercancel','lostpointercapture'])el.addEventListener(ev,e=>{controls.pointerUp(e.pointerId);syncControls();});}
@@ -665,7 +749,7 @@ function bindEvents(){
  document.addEventListener('keyup',e=>{const action=actionForKey(e.code,keymap);controls.keyUp(e.code);syncControls();if(action)e.preventDefault();});
  window.addEventListener('blur',()=>{if(started&&!paused)setPaused(true);clearControls();});
  document.addEventListener('visibilitychange',()=>{if(document.hidden){if(started&&!paused)setPaused(true);clearControls();}});
- for(const [id,key] of [['touchLeft','left'],['touchRight','right'],['touchBrake','brake'],['touchGas','throttle']])attachTouch(id,key);
+ for(const [id,key] of [['touchLeft','left'],['touchRight','right'],['touchBrake','brake'],['touchGas','throttle'],['touchSprint','handbrake']])attachTouch(id,key);
  window.addEventListener('chase-context-lost',()=>frameGuard.stop(Error('Se ha perdido el contexto WebGL. Recarga la página para reactivar el motor.')));
 }
 const screenFX=$('speedFx');const impactFX=$('impactFx');let impactIntensity=0;
@@ -681,9 +765,9 @@ function updateScreenEffects(vehicle,delta){
 let last=0,acc=0,frames=0;
 const frameGuard=createRuntimeGuard(fatal);
 function frame(now){frameGuard.run(()=>frameTick(now));}
-function frameTick(now){requestAnimationFrame(frame);if(!last)last=now;const delta=Math.max(0,Math.min((now-last)/1000,.05));last=now;
- if(!paused&&!helpOpen&&!settingsOpen&&!archiveOpen&&!contactOpen&&!storyOpen){acc+=delta;let ticks=0;while(acc>=FIXED_STEP&&ticks<12){const previous=car.completed;const previousRaceContact=race.lastCollision;const speedBefore=Math.abs(car.speed);const draft=slipstream(race,car);if(pedestrian.active)stepPedestrian(pedestrian,inputs,FIXED_STEP,[car,...streetTraffic,...(police.active?[police.agent]:[]),...ambushPatrols.filter(p=>p.active).map(p=>p.agent)]);else step(car,{...inputs,slipstream:draft,steeringSensitivity:settings.steeringSensitivity/100},FIXED_STEP);const result=urbanMode?{contact:false,finished:false}:stepRace(race,car,FIXED_STEP);if(urbanMode){urbanElapsed+=FIXED_STEP;stepTraffic(streetTraffic,FIXED_STEP,pedestrian.active?null:car,urbanElapsed);suspect.active=selectedChapter===7&&mission.phase==='active'&&mission.index===1;stepSuspect(suspect,FIXED_STEP);const prevPursuit=police.active;stepPolice(police,FIXED_STEP,pedestrian.active?{x:pedestrian.x,z:pedestrian.z,kmh:0}:car);
- if(!sideMode()&&((selectedChapter===8&&mission.index>=1)||(selectedChapter===11&&mission.index>=2)||(selectedChapter===15&&mission.index>=1))&&mission.phase==='active'&&!ambushPatrols.length){
+function frameTick(now){requestAnimationFrame(frame);pollGamepad();if(!last)last=now;const delta=Math.max(0,Math.min((now-last)/1000,.05));last=now;
+ if(!paused&&!helpOpen&&!settingsOpen&&!archiveOpen&&!contactOpen&&!storyOpen){acc+=delta;let ticks=0;while(acc>=FIXED_STEP&&ticks<12){const previous=car.completed;const previousRaceContact=race.lastCollision;const speedBefore=Math.abs(car.speed);const draft=slipstream(race,car);if(pedestrian.active)stepPedestrian(pedestrian,inputs,FIXED_STEP,[car,...streetTraffic,...(police.active?[police.agent]:[]),...ambushPatrols.filter(p=>p.active).map(p=>p.agent)]);else step(car,{...inputs,slipstream:draft,steeringSensitivity:settings.steeringSensitivity/100},FIXED_STEP);const result=urbanMode?{contact:false,finished:false}:stepRace(race,car,FIXED_STEP);if(urbanMode){urbanElapsed+=FIXED_STEP;stepTraffic(streetTraffic,FIXED_STEP,pedestrian.active?null:car,urbanElapsed);suspect.active=!explorationMode()&&!sideMode()&&selectedChapter===7&&mission.phase==='active'&&mission.index===1;stepSuspect(suspect,FIXED_STEP);const prevPursuit=police.active;stepPolice(police,FIXED_STEP,pedestrian.active?{x:pedestrian.x,z:pedestrian.z,kmh:0}:car);
+ if(!sideMode()&&!explorationMode()&&((selectedChapter===8&&mission.index>=1)||(selectedChapter===11&&mission.index>=2)||(selectedChapter===15&&mission.index>=1))&&mission.phase==='active'&&!ambushPatrols.length){
   ambushPatrols=[createPolice(),createPolice()];
   for(let i=0;i<ambushPatrols.length;i++){
    const p=ambushPatrols[i];p.active=true;p.heat=4;
@@ -693,7 +777,7 @@ function frameTick(now){requestAnimationFrame(frame);if(!last)last=now;const del
  }
  const targetPose=pedestrian.active?{x:pedestrian.x,z:pedestrian.z,kmh:0}:car;
  for(const p of ambushPatrols)stepPolice(p,FIXED_STEP,targetPose);
- const contact=pedestrian.active?{contacts:0,impact:0}:stepUrbanContacts(car,police.active?[...streetTraffic,police.agent,...ambushPatrols.filter(p=>p.active).map(p=>p.agent)]:[...streetTraffic,...ambushPatrols.filter(p=>p.active).map(p=>p.agent)],FIXED_STEP);if(contact.contacts){audio.cue('collision');const severity=applyImpact(car,contact.impact,'vehicle');if(severity>0)cinematicImpact(Math.min(1,.24+severity/24));if(severity>0&&car.damageEvents%2===1)notice('IMPACTO · ESTADO DEL VEHÍCULO '+damageCondition(car).health+'%');}else if(car.wall&&speedBefore>8){const severity=applyImpact(car,speedBefore,'barrier');if(severity>0)cinematicImpact(Math.min(1,.2+severity/24));if(severity>0&&car.damageEvents%2===1)notice('GOLPE EN BARRERA · REVISAR VEHÍCULO');}tickDamage(car,FIXED_STEP);if(!prevPursuit&&police.active){notice('POLICÍA · PATRULLA EN PERSECUCIÓN');audio.cue('pursuit');}if(police.escaped){police.escaped=false;audio.cue('escape');notice('HAS DESPISTADO A LA PATRULLA');}if(police.captured||ambushPatrols.some(p=>p.captured)){if(explorationMode()){reset();notice('LA POLICÍA TE HA DEVUELTO AL CARMEL · PUEDES SEGUIR EXPLORANDO');break;}if(sideMode()){sideRun.phase='lost';sideEnd('lost','DETENIDO POR LA POLICÍA');break;}missionEnd(false,{captured:true});break;}const missionPos=pedestrian.active?{...car,x:pedestrian.x,z:pedestrian.z,kmh:0,onFoot:true}:car;missionPos.suspectDistance=suspect.active?Math.hypot(missionPos.x-suspect.x,missionPos.z-suspect.z):Infinity;missionPos.patrolDistance=Math.min(...ambushPatrols.filter(p=>p.active).map(p=>Math.hypot(missionPos.x-p.agent.x,missionPos.z-p.agent.z)),Infinity);const completedBefore=mission.index;const state=explorationMode()?'active':sideMode()?stepSideRun(sideRun,missionPos,FIXED_STEP):stepMission(mission,missionPos,FIXED_STEP);if(sideMode()&&(state==='won'||state==='lost')){sideEnd(state);break;}if(state==='checkpoint'){{const next=sideMode()?sideTarget(sideRun):missionTarget(mission);notice(objectiveTransition(next,sideMode()));updateObjectivePresentation();}if(!sideMode()&&!explorationMode()&&showStoryBeat(storyBeat(selectedChapter,completedBefore))){acc=0;break;}}if(state==='won'||state==='lost'){missionEnd(state==='won');break;}}if(!urbanMode&&result.contact&&!previousRaceContact)cinematicImpact(.42);if(result.contact&&race.collisions>0&&car.hitCooldown>.4&&frames%120===0)notice('¡CONTACTO CON OTRO COCHE!');if(car.wall&&frames%90===0)audio.cue('collision');if(!pedestrian.active)renderer.emitDrivingEffects?.(car,FIXED_STEP,inputs.handbrake);if(car.completed!==previous){audio.cue('lap');if(car.best!==null&&(savedBest===null||car.best<savedBest)){savedBest=car.best;saveRecord(savedBest);audio.cue('record');notice('¡NUEVO RÉCORD! '+formatTime(savedBest));}else notice('VUELTA COMPLETADA '+formatTime(car.lastLap));}acc-=FIXED_STEP;ticks++;if(result.finished){finishRace();break;}}if(ticks===12)acc=Math.min(acc,FIXED_STEP*3);}else acc=0;
+ const contact=pedestrian.active?{contacts:0,impact:0}:stepUrbanContacts(car,police.active?[...streetTraffic,police.agent,...ambushPatrols.filter(p=>p.active).map(p=>p.agent)]:[...streetTraffic,...ambushPatrols.filter(p=>p.active).map(p=>p.agent)],FIXED_STEP);if(contact.contacts){audio.cue('collision');const severity=applyImpact(car,contact.impact,'vehicle');if(severity>0)cinematicImpact(Math.min(1,.24+severity/24));if(severity>0&&car.damageEvents%2===1)notice('IMPACTO · ESTADO DEL VEHÍCULO '+damageCondition(car).health+'%');}else if(!pedestrian.active&&car.barrierContact&&speedBefore>8){const severity=applyImpact(car,speedBefore,'barrier');if(severity>0)cinematicImpact(Math.min(1,.2+severity/24));if(severity>0&&car.damageEvents%2===1)notice('GOLPE EN BARRERA · REVISAR VEHÍCULO');}tickDamage(car,FIXED_STEP);if(!prevPursuit&&police.active){notice('POLICÍA · EXCESO DE VELOCIDAD · GANA DISTANCIA');audio.cue('pursuit');}if(police.escaped){police.escaped=false;audio.cue('escape');notice('HAS DESPISTADO A LA PATRULLA');}if(police.captured||ambushPatrols.some(p=>p.captured)){if(explorationMode()){reset();notice('LA POLICÍA TE HA DEVUELTO AL CARMEL · PUEDES SEGUIR EXPLORANDO');break;}if(sideMode()){sideRun.phase='lost';sideEnd('lost','DETENIDO POR LA POLICÍA');break;}missionEnd(false,{captured:true});break;}const missionPos=pedestrian.active?{...car,x:pedestrian.x,z:pedestrian.z,kmh:0,onFoot:true}:car;missionPos.suspectDistance=suspect.active?Math.hypot(missionPos.x-suspect.x,missionPos.z-suspect.z):Infinity;missionPos.patrolDistance=Math.min(nearestEntityDistance([police],missionPos.x,missionPos.z,{police:true}),nearestEntityDistance(ambushPatrols,missionPos.x,missionPos.z,{police:true}));const completedBefore=mission.index;const state=explorationMode()?'active':sideMode()?stepSideRun(sideRun,missionPos,FIXED_STEP):stepMission(mission,missionPos,FIXED_STEP);if(sideMode()&&(state==='won'||state==='lost')){sideEnd(state);break;}if(state==='checkpoint'){{const next=sideMode()?sideTarget(sideRun):missionTarget(mission);notice(objectiveTransition(next,sideMode()));updateObjectivePresentation();}if(!sideMode()&&!explorationMode()&&showStoryBeat(storyBeat(selectedChapter,completedBefore))){acc=0;break;}}if(state==='won'||state==='lost'){missionEnd(state==='won');break;}}if(!urbanMode&&result.contact&&!previousRaceContact)cinematicImpact(.42);if(result.contact&&race.collisions>0&&car.hitCooldown>.4&&frames%120===0)notice('¡CONTACTO CON OTRO COCHE!');if(car.wall&&frames%90===0)audio.cue('collision');if(!pedestrian.active)renderer.emitDrivingEffects?.(car,FIXED_STEP,inputs.handbrake);if(car.completed!==previous){audio.cue('lap');if(car.best!==null&&(savedBest===null||car.best<savedBest)){savedBest=car.best;saveRecord(savedBest);audio.cue('record');notice('¡NUEVO RÉCORD! '+formatTime(savedBest));}else notice('VUELTA COMPLETADA '+formatTime(car.lastLap));}acc-=FIXED_STEP;ticks++;if(result.finished){finishRace();break;}}if(ticks===12)acc=Math.min(acc,FIXED_STEP*3);}else acc=0;
  if(settings.quality==='auto'&&renderer.fps&&frames%30===0){
   const scale=automaticQuality.observe(renderer.fps,Math.max(.01,(now-(frame.lastAutoAt||now))/1000),!paused&&!settingsOpen&&!helpOpen);
   frame.lastAutoAt=now;
@@ -720,13 +804,13 @@ function fatal(error){
 }
 try{
  try{
-  const id=localStorage.getItem('chase404.track.v4');
+  const id=storage.getItem('chase404.track.v4');
   if(id==='barcelona'||TRACKS.some(t=>t.id===id))$('trackSelect').value=id;
-  const carId=localStorage.getItem('chase404.car.v4');
+  const carId=storage.getItem('chase404.car.v4');
   if(CARS.some(c=>c.id===carId))$('carSelect').value=carId;
  }catch{}
  if(!$('trackSelect').value)$('trackSelect').value='barcelona';urbanMode=$('trackSelect').value==='barcelona';if(!urbanMode)selectTrack($('trackSelect').value);else mode='free';initRace();savedBest=readRecord();
  renderer=new Renderer($('scene'));renderer.setUrbanMode(urbanMode);$('app').dataset.contrast=String(settings.contrast);$('app').dataset.hudScale=String(settings.hudScale);$('app').dataset.reducedMotion=String(settings.reducedMotion);renderer.setEffectsEnabled(effectsEnabled&&!effectiveReducedMotion());$('fxBtn').setAttribute('aria-pressed',String(effectsEnabled));$('fxBtn').innerHTML=effectsEnabled?'✦ <span>FX ON</span>':'✧ <span>FX OFF</span>';renderer.changeVehicle($('carSelect').value);
  updateSelectionUI();updateProfileUI();applyLighting();applyQuality();bindEvents();updateSideMenu();race.order=standings(race,car);race.position=race.order.find(e=>e.id==='YOU').position;renderHUD();requestAnimationFrame(frame);}catch(error){frameGuard.stop(error);}
 
-$('objectiveAnnouncementDismiss').addEventListener('click',()=>{$('objectiveAnnouncement').hidden=true;});
+$('objectiveAnnouncementDismiss').addEventListener('click',()=>{dismissedObjectiveKey=presentedObjectiveKey;$('objectiveAnnouncement').hidden=true;});

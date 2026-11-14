@@ -1,3 +1,10 @@
+## v0.20.0 — Conducción, navegación y campaña
+
+- Ruta por la red de calles, indicador de rumbo y patrullas en el minimapa.
+- Puntos de inicio por capítulo y progreso de extracción o evasión después de perder a todas las patrullas.
+- Correcciones de marcha atrás, colisiones, cámara junto a fachadas, entrada a coches y arranque con almacenamiento bloqueado.
+- Controles táctiles para correr y derrapar, más compatibilidad básica con mando estándar y portada del Carmel.
+
 ## v0.19.0 — Geometría y personalidad de los barrios
 
 - Convertidos en planos los cristales de fachadas de Gràcia, Guinardó y Eixample y de viviendas alejadas de calles, con normales hacia el exterior.

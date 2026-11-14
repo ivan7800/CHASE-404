@@ -1,4 +1,4 @@
-# CHASE 404 · v0.19.0 · Acta de aceptación manual
+# CHASE 404 · v0.20.0 · Acta de aceptación manual
 
 **Estado: PENDIENTE.** Este documento no certifica una versión final. Completarlo con fecha, sistema, navegador, resultados y evidencias reales de cada sesión.
 
@@ -11,7 +11,7 @@
 | A05 | Final familia: decisión 14 y misión 15 | Pendiente | Resultado y escena final |
 | A06 | Final pruebas: decisión 14 y misión 15 | Pendiente | Resultado y escena final |
 | A07 | Taller, garaje, tres desafíos, secretos y tres contactos | Pendiente | Capturas de guardado y recompensas |
-| A08 | Pausa, ayuda, ajustes, diálogos y 47 botones | Pendiente | Lista de interacciones y resultado |
+| A08 | Pausa, ayuda, ajustes, diálogos y 48 botones | Pendiente | Lista de interacciones y resultado |
 | A09 | Tres iluminaciones, tres cámaras y sonido | Pendiente | Observación visual y auditiva, sin bloqueos |
 | A10 | Móvil: controles, escala, giros de orientación | Pendiente | Modelo y navegador, capturas |
 | A11 | 30 minutos de sesión: FPS y RAM | Pendiente | Medidas en equipo real y circunstancias |

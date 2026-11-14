@@ -133,7 +133,7 @@ export function stepMission(m,position,dt){
  }
  if(target?.kind==='extract'){
   const arrived=Math.hypot(position.x-target.x,position.z-target.z)<=26;
-  const safe=Number.isFinite(position.patrolDistance)&&position.patrolDistance>=65;
+  const safe=position.patrolDistance>=65;
   m.holdProgress=arrived&&!position.onFoot&&safe?Math.min(target.hold,m.holdProgress+dt):0;
   if(m.holdProgress>=target.hold){m.index++;m.holdProgress=0;if(m.index>=missionChapter(m.chapter).points.length){m.phase='won';m.completed=true;return 'won';}return 'checkpoint';}
   if(m.remaining<=0){m.phase='lost';return 'lost';}
@@ -147,7 +147,7 @@ export function stepMission(m,position,dt){
  }
  if(target?.kind==='evade'){
   const arrived=Math.hypot(position.x-target.x,position.z-target.z)<=22;
-  const safe=Number.isFinite(position.patrolDistance)&&position.patrolDistance>=(target.safeDistance??75);
+  const safe=position.patrolDistance>=(target.safeDistance??75);
   m.holdProgress=arrived&&(m.chapter!==8||!position.onFoot)&&safe?Math.min(target.hold,m.holdProgress+dt):0;
   if(m.holdProgress>=target.hold){m.index++;m.holdProgress=0;if(m.index>=missionChapter(m.chapter).points.length){m.phase='won';m.completed=true;return 'won';}return 'checkpoint';}
   if(m.remaining<=0){m.phase='lost';return 'lost';}

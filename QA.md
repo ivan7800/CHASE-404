@@ -1,9 +1,5 @@
-# CHASE 404 — Estado de calidad (0.19.0 ALPHA)
+# CHASE 404 — Estado de calidad (0.20.0 ALPHA)
 
-La ciudad usa 374.409 vértices frente a 396.975 en v0.18.0. Se añaden detalles de calle a tres fachadas de Gràcia y tres del Guinardó. El conjunto de colisionadores de edificios conserva 124 elementos y las posiciones de cada uno.
+Consulta [QA de la versión](QA_v0.20.0.md) y el [acta de aceptación](ACEPTACION_MANUAL.md) para el alcance de las pruebas y los escenarios pendientes.
 
-**Evidencia de esta fase:** [QA_v0.19.0.md](QA_v0.19.0.md) y el flujo [Static QA](https://github.com/ivan7800/CHASE-404/actions/workflows/quality.yml). La [CI de la rama](https://github.com/ivan7800/CHASE-404/actions/runs/38431318992) terminó correctamente: 413/413 pruebas, 6/6 GLB, arranque HTTP 7/7, auditoría estática y aceptación técnica 18/18.
-
-**Aceptación jugable:** pendiente. [ACEPTACION_MANUAL.md](ACEPTACION_MANUAL.md) enumera las pruebas en WebGL, campaña completa, ambos desenlaces, sonido, móvil, guardado y rendimiento. Los controles automáticos verifican código y recursos; no certifican una partida real.
-
-**Publicación:** [GitHub Pages](https://ivan7800.github.io/CHASE-404/) existe. Confirmar que muestra 0.19.0 tras integrar la rama; consultar [PUBLISH_GITHUB_PAGES.md](PUBLISH_GITHUB_PAGES.md).
+El sitio público se actualiza después de integrar la rama. Consulta [la guía de publicación](PUBLISH_GITHUB_PAGES.md) para confirmar el commit publicado.

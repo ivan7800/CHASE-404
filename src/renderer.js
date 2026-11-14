@@ -1,3 +1,4 @@
+import { resolveCityBuildingMove } from './urban-buildings.js';
 /** Adapted from the local WebGL approach in EIFFEL-404; original camera, shaders and assets. */
 import {buildTrack,buildCar,buildWheel,buildCarShadow,Builder} from './geometry.js';
 import {loadGLB} from './glb.js';
@@ -228,6 +229,14 @@ export class Renderer{
   const f=[Math.sin(car.yaw),Math.cos(car.yaw)],mode=foot?.active?0:this.cameraMode,carY=this.urban?cityElevation(car.x,car.z):0;
   if(this.startCam){resetCameraRig(this.cameraRig);this.startCam=false;}
   const shot=advanceCameraRig(this.cameraRig,car,{dt,mode:this.cameraMode,urban:this.urban,foot,elevation:cityElevation,motion:this.effectsEnabled});
+  if(this.urban&&mode!==2){
+   const actor=foot?.active?foot:car;
+   const safe=resolveCityBuildingMove(actor.x,actor.z,shot.eye.x,shot.eye.z,{radius:.65});
+   if(safe.hit){
+    shot.eye.x=safe.x;shot.eye.z=safe.z;
+    shot.eye.y=Math.max(shot.eye.y,cityElevation(safe.x,safe.z)+3);
+   }
+  }
   this.cam=shot.eye;this.look=shot.target;
   const view=lookAt([shot.eye.x,shot.eye.y,shot.eye.z],[shot.target.x,shot.target.y,shot.target.z],shot.roll);
   const proj=projection(w/h,shot.fov),vp=multiply(proj,view);

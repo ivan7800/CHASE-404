@@ -49,7 +49,8 @@ export function step(car,input,dt){
  // Restore heading only after the driver releases the steering. Applying this
  // while a key is held cancels the turn and makes right/left feel unresponsive.
  if(turn===0&&!drift&&v>4&&Math.hypot(car.vx,car.vz)>2){
-  const velAngle=Math.atan2(car.vx,car.vz);
+  const direction=Math.sign(car.speed)||1;
+  const velAngle=Math.atan2(car.vx*direction,car.vz*direction);
   const difference=Math.atan2(Math.sin(velAngle-car.yaw),Math.cos(velAngle-car.yaw));
   car.yaw+=difference*Math.min(1,dt*1.8);
  }
@@ -66,7 +67,7 @@ export function step(car,input,dt){
   }
   const street=nearestStreet(car.x,car.z);car.offset=street.distance;
   car.offroad=street.distance>street.roadHalf;car.cityWallTime=Math.max(0,(car.cityWallTime||0)-dt);
-  car.wall=Boolean(building.hit)||car.cityWallTime>0;
+  let barrierContact=Boolean(building.hit);
   if(car.offroad){car.speed*=1-.9*dt;car.vx*=1-.65*dt;car.vz*=1-.65*dt;}
   const maxDistance=street.sidewalkHalf+2;
   if(street.distance>maxDistance){
@@ -74,9 +75,11 @@ export function step(car,input,dt){
    car.x=street.x+nx*maxDistance;car.z=street.z+nz*maxDistance;
    const outward=car.vx*nx+car.vz*nz;
    if(outward>0){car.vx-=nx*outward;car.vz-=nz*outward;}
-   car.speed*=.72;car.wall=true;
+   car.speed*=.72;barrierContact=true;
   }
-  if(car.wall)car.cityWallTime=.18;
+  car.barrierContact=barrierContact;
+  if(barrierContact)car.cityWallTime=.18;
+  car.wall=car.cityWallTime>0;
   car.elapsed+=dt;car.lapTime+=dt;car.kmh=Math.round(Math.abs(car.speed)*3.6);car.wheel+=car.speed*dt/.42;
   car.slide+=(Math.abs(car.steer)*Math.abs(car.speed)*(input.handbrake?.01:.001)-car.slide)*Math.min(1,dt*7);
   car.hitCooldown=Math.max(0,car.hitCooldown-dt);return car;

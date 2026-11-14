@@ -244,3 +244,30 @@
 @media(max-width:390px){.mobile-controls .touch-actions:not([hidden]){right:0;bottom:117px;gap:3px}.mobile-controls .touch-actions button{min-width:47px;font-size:9px;padding:6px 4px}}
 
 .campaign-status{color:#f5d393!important;font-weight:800;letter-spacing:1.1px;font-size:11px!important;margin:12px 0!important}.intro-actions #newCampaignBtn{border-color:#b99267}
+
+/* City controls leave the road and the corner map visible. */
+.objective-announcement{position:absolute}
+.app[data-world="urban"] .speed-value strong{font-size:clamp(48px,6vw,92px)}
+.app[data-world="urban"] .track-ident{display:none}
+.app[data-world="urban"] .speed-data{width:clamp(110px,16vw,205px)}
+.app[data-on-foot="true"] .speed-value>span,
+.app[data-on-foot="true"] .speed-meter,
+.app[data-on-foot="true"] .tach-details{display:none}
+.app[data-on-foot="true"] .speed-value strong{letter-spacing:.04em;font-size:clamp(30px,4vw,48px)}
+@media (any-pointer:coarse), (max-width:740px), (max-height:500px) and (orientation:landscape){
+ .mobile-controls{display:flex;position:absolute;bottom:calc(45px + env(safe-area-inset-bottom));left:12px;right:12px;z-index:5;justify-content:space-between;align-items:end;pointer-events:none}
+ .mobile-controls>div{display:flex;gap:7px;pointer-events:auto}
+ .mobile-controls button{border-radius:12px;border:1px solid #ffffff88;background:#0a1c2aed;min-width:52px;height:50px;font-weight:800;user-select:none;touch-action:none}
+ .mobile-controls .touch-sprint,.mobile-controls .touch-vehicle{position:absolute;bottom:60px;pointer-events:auto;padding:0 9px;height:44px;font-size:11px}
+ .mobile-controls .touch-sprint{left:0}
+ .mobile-controls .touch-vehicle{right:0}
+ .mobile-controls .touch-actions:not([hidden]){position:absolute;right:0;bottom:109px;display:flex}
+ .app[data-world="urban"] .speedzone{bottom:calc(108px + env(safe-area-inset-bottom));left:12px}
+ .app[data-world="urban"] .speed-top,.app[data-world="urban"] .tach-details{display:none}
+}
+@media (max-height:500px) and (orientation:landscape){
+ .app{min-height:0}
+ .app[data-world="urban"] .speedzone{display:none}
+ .app[data-world="urban"] .progression{display:none}
+ .objective-announcement{top:70px}
+}

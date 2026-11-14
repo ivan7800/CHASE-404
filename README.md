@@ -1,6 +1,6 @@
 # CHASE 404 — Barcelona 1984
 
-**Versión 0.19.0 ALPHA · Barrios y geometría.** El recorrido piloto del Carmel conserva tres manzanas con balcones, un comercio y una bajada peatonal; Gràcia y el Guinardó reciben frentes de calle diferenciados. La malla urbana baja de 396.975 a 374.409 vértices sin alterar los colisionadores de edificios. Se conservan colisiones para coche y peatón. La revisión visual en WebGL, conducción real y FPS siguen pendientes de prueba manual.
+**Versión 0.20.0 ALPHA · Jugabilidad en el Carmel.** El minimapa muestra la ruta de la misión, el rumbo del jugador y las patrullas. Los capítulos posteriores empiezan cerca de su primer objetivo. Se han corregido la marcha atrás, el aviso de barrera, el arranque sin almacenamiento y las salidas de misión cuando ya no quedan patrullas activas.
 
 Videojuego original de conducción arcade ambientado en una Barcelona ficticia y condensada de 1984. Incluye 15 misiones principales, dos desenlaces, tres encargos secundarios, exploración libre, seis modelos de coches, taller, garaje, secretos y personajes con historias secundarias. Se ejecuta en el navegador con WebGL y archivos locales; no requiere cuenta, servidor remoto ni servicios externos.
 
@@ -29,7 +29,7 @@ Node.js **no es necesario para jugar**. Para ejecutar QA se necesita Node 22+: `
 | Cambiar iluminación / audio | B / M |
 | Ajustes / pausar | O / P |
 
-También hay botones táctiles. La conducción y el desplazamiento a pie tienen esquemas diferentes adaptados a la cámara.
+En pantallas táctiles hay controles para conducir, caminar, derrapar y correr. Con un mando de mapeo estándar, usa el stick izquierdo o la cruceta, RT/LT para acelerar/frenar, A para derrapar/correr, X para subir o bajar, Y para la cámara y Start para pausa/continuar. A también inicia desde la portada y avanza escenas. Los ajustes y otros menús se manejan con teclado, ratón o pantalla táctil. El mando se ha comprobado con entradas emuladas; queda pendiente un mando físico.
 
 ## Publicación en GitHub Pages
 
@@ -41,13 +41,13 @@ Los ajustes y avances se almacenan en `localStorage` del navegador. Borrar datos
 
 ## Verificación y estado
 
-La geometría y los nuevos corredores urbanos se documentan en [QA_v0.19.0.md](QA_v0.19.0.md). La muestra anterior del Carmel está en [QA_v0.18.0.md](QA_v0.18.0.md). La fase anterior se documenta en [QA_v0.17.0.md](QA_v0.17.0.md). Las colisiones y el remate urbano anterior se describen en [QA_v0.16.0.md](QA_v0.16.0.md).
+Consulta [QA_v0.20.0.md](QA_v0.20.0.md) para la validación de esta versión. La geometría y los nuevos corredores urbanos se documentan en [QA_v0.19.0.md](QA_v0.19.0.md). La muestra anterior del Carmel está en [QA_v0.18.0.md](QA_v0.18.0.md). La fase anterior se documenta en [QA_v0.17.0.md](QA_v0.17.0.md). Las colisiones y el remate urbano anterior se describen en [QA_v0.16.0.md](QA_v0.16.0.md).
 
 - `npm run audit`: sintaxis, tests, assets, conexiones estáticas de UI y puerta de distribución.
 - `npm run release:gate`: presencia de recursos, consistencia de versión y archivos de publicación.
 - `npm run site:prepare`: genera `_site/` y verifica rutas, imports y ausencia de herramientas de desarrollo.
 - Los controles marcados como «conectados» en el auditor estático no equivalen a botones pulsados con navegador real.
-- **Pendiente:** campaña completa con ambas ramas, juego móvil, WebGL y sonido reales, FPS y sesiones prolongadas.
+- **Pendiente:** campaña completa con ambas ramas, juego en móvil físico, escucha en hardware real, FPS en GPU física y sesiones prolongadas.
 
 Para solucionar incidencias de inicio, consulta **[PRIMER_ARRANQUE.md](PRIMER_ARRANQUE.md)**. La prueba HTTP local se ejecuta con `python3 tools/first_run_check.py` (Windows: `py -3 tools\first_run_check.py`). No valida WebGL ni clics reales.
 
