@@ -1,23 +1,23 @@
 /** CHASE 404 · opening mission. Deterministic progression; independent of rendering. */
 export const MISSION_POINTS=Object.freeze([
- Object.freeze({x:106,z:132,name:'TALLER DE GAEL',text:'Recoge la cinta en el taller.'}),
+ Object.freeze({x:106,z:132,name:'TALLER DE GAEL',text:'Recoge el casete que dejó Pau en el taller.'}),
  Object.freeze({x:232,z:96,name:'CALLE ALTA',text:'Sube hasta el enlace de la calle Alta.'}),
- Object.freeze({x:240,z:-58,name:'CONTACTO DEL TURÓ',text:'Entrega la cinta antes de que lleguen.'})
+ Object.freeze({x:240,z:-58,name:'CONTACTO DEL TURÓ',text:'Entrega el casete al recadero del Turó.'})
 ]);
 export const SECOND_MISSION_POINTS=Object.freeze([
  Object.freeze({x:-250,z:48,name:'ENLACE DEL CARMEL',text:'Sigue el rastro del mensajero hacia Gràcia.'}),
  Object.freeze({x:-410,z:80,name:'CALLE DE GRÀCIA',text:'Encuentra la cabina junto a las fachadas antiguas.'}),
- Object.freeze({x:-535,z:115,name:'CONTACTO DE GRÀCIA',text:'Entrega el mensaje cifrado al contacto.'})
+ Object.freeze({x:-535,z:115,name:'CONTACTO DE GRÀCIA',text:'Lleva el casete al contacto que reconoce las voces.'})
 ]);
 export const THIRD_MISSION_POINTS=Object.freeze([
  Object.freeze({x:-535,z:115,name:'SALIDA DE GRÀCIA',text:'Recoge el aviso del contacto y entra en la avenida.'}),
  Object.freeze({x:-700,z:115,name:'AVENIDA DEL EIXAMPLE',text:'Cruza el control discretamente: mantén entre 15 y 45 km/h durante 3 segundos cerca del objetivo, sin bajarte del coche.',kind:'precision-drive',hold:3,minKmh:15,maxKmh:45,radius:55}),
- Object.freeze({x:-875,z:-125,name:'ENTREGA EN EL EIXAMPLE',text:'Lleva las pruebas al buzón antes de que te encuentren.'})
+ Object.freeze({x:-875,z:-125,name:'ENTREGA EN EL EIXAMPLE',text:'Recoge en el buzón la copia del registro de vehículos.'})
 ]);
 export const FOURTH_MISSION_POINTS=Object.freeze([
  Object.freeze({x:-875,z:-125,name:'SALIDA DEL EIXAMPLE',text:'Sigue la pista de los almacenes hacia el puerto.'}),
  Object.freeze({x:-785,z:-340,name:'CONTROL DE ACCESO',text:'Encuentra la entrada de los muelles sin perder el paquete.'}),
- Object.freeze({x:-785,z:-555,name:'ALMACÉN 04',text:'Entrega las pruebas al contacto del almacén.'})
+ Object.freeze({x:-785,z:-555,name:'ALMACÉN 04',text:'Busca el parte que Pau firmó en el almacén.'})
 ]);
 export const FIFTH_MISSION_POINTS=Object.freeze([
  Object.freeze({x:-875,z:-555,name:'MUELLES DEL PUERTO',text:'Abandona los muelles. Te esperan en la montaña.'}),
@@ -54,8 +54,8 @@ export const NINTH_EAST_POINT=Object.freeze({x:-785,z:-340,name:'ENLACE DE SERVI
 export function ninthMissionPoints(routeChoice){return [NINTH_MISSION_POINTS[0],routeChoice==='CALLE DE SERVICIO'?NINTH_EAST_POINT:NINTH_WEST_POINT,NINTH_MISSION_POINTS[2]];}
 export const TENTH_MISSION_POINTS=Object.freeze([
  Object.freeze({x:-535,z:-5,name:'REFUGIO DE LA INFORMANTE',text:'Baja del coche y habla con Clara durante 5 segundos.',kind:'contact',hold:5}),
- Object.freeze({x:-700,z:115,name:'CABINA DEL EIXAMPLE',text:'Contacta con el inspector sin dar tu nombre.'}),
- Object.freeze({x:-785,z:-340,name:'ENLACE DEL PUERTO',text:'Recoge la dirección del escondite de tu hermano.'})
+ Object.freeze({x:-700,z:115,name:'CABINA DEL EIXAMPLE',text:'Llama al testigo desde la cabina. Pregunta dónde lo tienen.'}),
+ Object.freeze({x:-785,z:-340,name:'ENLACE DEL PUERTO',text:'Identifica el acceso que te indicó el testigo.'})
 ]);
 export const ELEVENTH_MISSION_POINTS=Object.freeze([
  Object.freeze({x:-785,z:-340,name:'ACCESO AL ALMACÉN',text:'Localiza el acceso al almacén señalado por Clara.'}),
@@ -74,15 +74,15 @@ export const THIRTEENTH_MISSION_POINTS=Object.freeze([
 ]);
 export const FOURTEENTH_MISSION_POINTS=Object.freeze([
  Object.freeze({x:-785,z:-340,name:'EL MENSAJE DE CLARA',text:'Consulta a Clara a pie para confirmar dónde retienen a tu hermano.',kind:'contact',hold:6}),
- Object.freeze({x:-785,z:-555,name:'LA ÚLTIMA DECISIÓN',text:'Escoge: rescatar a tu hermano junto al muelle o recuperar las pruebas en el control.',kind:'branch',alternatives:Object.freeze([{x:-875,z:-555,name:'RESCATAR A MI HERMANO'},{x:-875,z:-340,name:'RECUPERAR LAS PRUEBAS'}])}),
+ Object.freeze({x:-785,z:-555,name:'LA ÚLTIMA DECISIÓN',text:'Elige por dónde empezar: Pau está en el muelle y el expediente en el control.',kind:'branch',alternatives:Object.freeze([{x:-875,z:-555,name:'RESCATAR A MI HERMANO'},{x:-875,z:-340,name:'RECUPERAR LAS PRUEBAS'}])}),
  Object.freeze({x:-875,z:-555,name:'EL PRECIO DE ELEGIR',text:'Cumple tu decisión: rescata a tu hermano o reúne las pruebas, a pie.',kind:'decision',hold:8})
 ]);
 export const FOURTEENTH_RESCUE=Object.freeze({x:-875,z:-555,name:'RESCATE DEL HERMANO',text:'Libera a tu hermano a pie durante 8 segundos. Salvat conservará parte de las pruebas.',kind:'decision',hold:8});
-export const FOURTEENTH_EVIDENCE=Object.freeze({x:-785,z:-340,name:'PRUEBAS CONTRA SALVAT',text:'Recupera a pie las pruebas durante 8 segundos. Tu hermano seguirá esperando.',kind:'decision',hold:8});
+export const FOURTEENTH_EVIDENCE=Object.freeze({x:-875,z:-340,name:'PRUEBAS CONTRA SALVAT',text:'Recupera a pie las pruebas durante 8 segundos. Tu hermano seguirá esperando.',kind:'decision',hold:8});
 export const FIFTEENTH_RESCUE_PATH=Object.freeze({x:-875,z:-340,name:'RECUPERAR EL DOSSIER',text:'Tu hermano está a salvo. Entra a pie en el control y recupera el dossier que conserva Salvat.',kind:'investigate',hold:7});
 export const FIFTEENTH_EVIDENCE_PATH=Object.freeze({x:-875,z:-555,name:'LIBERAR AL HERMANO',text:'Conservas las pruebas, pero tu hermano sigue cautivo. Libéralo a pie antes de escapar.',kind:'rescue',hold:8});
 export const FIFTEENTH_ESCAPE=Object.freeze({x:-535,z:-5,name:'CRUZAR GRÀCIA',text:'Escapa de las patrullas y mantenlas a más de 75 metros durante 5 segundos.',kind:'evade',hold:5});
-export const FIFTEENTH_SALVAT=Object.freeze({x:-250,z:48,name:'ENCUENTRO CON SALVAT',text:'Deja el coche y afronta a Víctor Salvat en el punto de encuentro durante 8 segundos.',kind:'contact',hold:8});
+export const FIFTEENTH_SALVAT=Object.freeze({x:-250,z:48,name:'ENTREGA A CLARA',text:'Baja del coche y reúnete con Clara en el Carmel durante 8 segundos.',kind:'contact',hold:8});
 export const FIFTEENTH_MISSION_POINTS=Object.freeze([FIFTEENTH_RESCUE_PATH,FIFTEENTH_ESCAPE,FIFTEENTH_SALVAT]);
 export function fifteenthMissionPoints(choice){return [choice==='RECUPERAR LAS PRUEBAS'?FIFTEENTH_EVIDENCE_PATH:FIFTEENTH_RESCUE_PATH,FIFTEENTH_ESCAPE,FIFTEENTH_SALVAT];}
 export const VALID_FINAL_CHOICES=Object.freeze(['RESCATAR A MI HERMANO','RECUPERAR LAS PRUEBAS']);
@@ -108,7 +108,8 @@ export const MISSION_CHAPTERS=Object.freeze({
 });
 export const missionChapter=number=>MISSION_CHAPTERS[number]||MISSION_CHAPTERS[1];
 export function newMission(chapter=1,previousRoute=null,previousFinalChoice=null){return {chapter:missionChapter(chapter)===MISSION_CHAPTERS[chapter]?chapter:1,phase:'ready',index:0,remaining:missionChapter(chapter).limit,elapsed:0,holdProgress:0,tailLost:0,routeChoice:chapter===9&&['AVENIDA OESTE','CALLE DE SERVICIO'].includes(previousRoute)?previousRoute:null,finalChoice:chapter===15&&VALID_FINAL_CHOICES.includes(previousFinalChoice)?previousFinalChoice:null,completed:false};}
-export function missionTarget(m){return m.phase==='active'?(m.chapter===8?eighthMissionPoints(m.routeChoice):m.chapter===9?ninthMissionPoints(m.routeChoice):m.chapter===14?fourteenthMissionPoints(m.finalChoice):m.chapter===15?fifteenthMissionPoints(m.finalChoice):missionChapter(m.chapter).points)[m.index]||null:null;}
+export function missionTargets(m){return (m.chapter===8?eighthMissionPoints(m.routeChoice):m.chapter===9?ninthMissionPoints(m.routeChoice):m.chapter===14?fourteenthMissionPoints(m.finalChoice):m.chapter===15?fifteenthMissionPoints(m.finalChoice):missionChapter(m.chapter).points);}
+export function missionTarget(m){return m.phase==='active'?missionTargets(m)[m.index]||null:null;}
 export function startMission(m){if(m.phase==='ready'){m.phase='active';return true;}return false;}
 export function stepMission(m,position,dt){
  if(m.phase!=='active')return null;

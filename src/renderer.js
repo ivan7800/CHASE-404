@@ -136,18 +136,18 @@ export class Renderer{
   });
   // Figures dedicated to the final act, separate from the static city mesh.
   this.storyActorMeshes=Object.fromEntries(Object.values(STORY_ACTORS).map(actor=>{
-   const coat=actor.id==='salvat'?[44,47,58]:[93,89,79];
-   const trousers=actor.id==='salvat'?[28,30,38]:[65,66,63];
+   const coat=actor.id==='clara'?[44,47,58]:[93,89,79];
+   const trousers=actor.id==='clara'?[28,30,38]:[65,66,63];
    const body=new Builder(),head=new Builder(),arm=new Builder();
    body.taperedBox(0,1.17,0,[.92,.64],[.72,.52],2.20,coat);
-   body.box(0,2.32,-.28,.42,.20,.08,actor.id==='salvat'?[172,48,46]:[211,188,148]);
+   body.box(0,2.32,-.28,.42,.20,.08,actor.id==='clara'?[172,48,46]:[211,188,148]);
    for(const side of [-1,1]){
     body.box(side*.24,.57,0,.32,1.11,.45,trousers);
     body.box(side*.24,.11,-.12,.39,.21,.59,[33,34,37]);
    }
    arm.box(0,-.43,0,.29,.84,.36,coat);
-   head.box(0,.18,0,.59,.72,.54,actor.id==='salvat'?[191,139,105]:[202,155,121]);
-   head.box(0,.53,.02,.65,.16,.59,actor.id==='salvat'?[49,50,55]:[58,44,33]);
+   head.box(0,.18,0,.59,.72,.54,actor.id==='clara'?[191,139,105]:[202,155,121]);
+   head.box(0,.53,.02,.65,.16,.59,actor.id==='clara'?[49,50,55]:[58,44,33]);
    return [actor.id,{body:this.upload(body.finish()),arm:this.upload(arm.finish()),head:this.upload(head.finish())}];
   }));
   this.storyActors=[];
@@ -267,7 +267,7 @@ export class Renderer{
    const pieces=this.storyActorMeshes[actor.id];if(!pieces)continue;
    if((actor.x-car.x)**2+(actor.z-car.z)**2>260*260)continue;
    const pose=storyActorPose(this.urbanTime||0,actor.id,!this.effectsEnabled||this.reducedMotion);
-   const base=transform(actor.x,cityElevation(actor.x,actor.z)+pose.bob,actor.z,actor.id==='salvat'?.6:-.4);
+   const base=transform(actor.x,cityElevation(actor.x,actor.z)+pose.bob,actor.z,actor.id==='clara'?.6:-.4);
    this.draw(pieces.body,base,vp);
    this.draw(pieces.head,multiply(base,multiply(transform(0,2.6,0),spinX(pose.head))),vp);
    for(const side of [-1,1])this.draw(pieces.arm,multiply(base,multiply(transform(side*.62,2.24,0),spinX(side<0?pose.leftArm:pose.rightArm))),vp);

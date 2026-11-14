@@ -1,3 +1,9 @@
+## v0.21.0 — El turno de noche
+
+- Nuevas introducciones, escenas y consecuencias para la campaña de Gael y Pau.
+- Las alternativas del puerto llevan al objetivo anunciado. El inicio y el cierre del último capítulo dependen de lo que se eligió en el anterior.
+- Las victorias y sus decisiones se guardan en el mismo registro. Los guardados anteriores siguen siendo compatibles.
+
 ## v0.20.0 — Conducción, navegación y campaña
 
 - Ruta por la red de calles, indicador de rumbo y patrullas en el minimapa.
