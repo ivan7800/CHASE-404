@@ -1,6 +1,6 @@
 # CHASE 404 — Barcelona 1984
 
-**Versión 0.22.0 ALPHA · Calles en movimiento.** El modo libre añade tres encargos señalados en azul, peatones y más tráfico por barrios. Las patrullas frenan en giros, buscan a Gael en el último sitio donde lo vieron y abandonan la búsqueda si se mantiene fuera de vista. [Diseño de campaña](CAMPAÑA.md).
+**Versión 0.23.0 ALPHA · A pie de calle.** Cruces redondeados, viviendas con fachadas orientadas a las calles del Carmel, una fila de comercios y una placeta en Gràcia, y un paseo arbolado en el Guinardó. El modo libre incluye encargos, peatones y búsqueda policial. [Diseño de campaña](CAMPAÑA.md).
 
 Videojuego original de conducción arcade ambientado en una Barcelona ficticia y condensada de 1984. Incluye 15 misiones principales, dos desenlaces, tres encargos secundarios, exploración libre, seis modelos de coches, taller, garaje, secretos y personajes con historias secundarias. Se ejecuta en el navegador con WebGL y archivos locales; no requiere cuenta, servidor remoto ni servicios externos.
 
@@ -44,7 +44,7 @@ Los ajustes y avances se almacenan en `localStorage` del navegador. Borrar datos
 
 ## Verificación y estado
 
-Consulta [QA v0.21.0](QA_v0.21.0.md) para los recorridos de esta versión.
+Consulta [QA v0.23.0](QA_v0.23.0.md) para la comparación visual y la validación de esta versión.
 
 Consulta [QA_v0.20.0.md](QA_v0.20.0.md) para la validación de esta versión. La geometría y los nuevos corredores urbanos se documentan en [QA_v0.19.0.md](QA_v0.19.0.md). La muestra anterior del Carmel está en [QA_v0.18.0.md](QA_v0.18.0.md). La fase anterior se documenta en [QA_v0.17.0.md](QA_v0.17.0.md). Las colisiones y el remate urbano anterior se describen en [QA_v0.16.0.md](QA_v0.16.0.md).
 

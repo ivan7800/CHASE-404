@@ -5,7 +5,7 @@ import {buildCity,CITY_BUILDING_COLLIDERS,DISTRICT_CORRIDORS_019} from '../src/c
 test('district corridors preserve building collisions and geometry headroom',()=>{
  assert.equal(DISTRICT_CORRIDORS_019.gracia.length,3);
  assert.equal(DISTRICT_CORRIDORS_019.guinardo.length,3);
- assert.equal(CITY_BUILDING_COLLIDERS.length,124);
+ assert.equal(CITY_BUILDING_COLLIDERS.length,127);
  const city=buildCity();
  assert.ok(city.count<385000,`city geometry budget: ${city.count}`);
  assert.ok(city.positions.every(Number.isFinite));

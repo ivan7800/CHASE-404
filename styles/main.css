@@ -285,3 +285,15 @@
  font:600 .78rem system-ui,sans-serif;
 }
 #streetJobBtn:focus-visible {outline:2px solid #fff;outline-offset:2px}
+
+/* Keep the district and essential controls readable at desktop widths. */
+.app[data-world="urban"] .header-mid #headerTrack,
+.app[data-world="urban"] .header-mid .dotsep,
+.app[data-world="urban"] .progression-bottom,
+.app[data-world="urban"] .scanlines{display:none}
+.app[data-world="urban"] .header-mid{white-space:nowrap;gap:8px}
+.app[data-world="urban"] .header-actions{min-width:0;overflow-x:auto;scrollbar-width:thin;gap:5px}
+.app[data-world="urban"] .header-actions button{flex:0 0 auto;white-space:nowrap}
+@media(min-width:741px){
+ .app[data-world="urban"] .header-actions button{padding-inline:7px;letter-spacing:.35px;font-size:9px}
+}
