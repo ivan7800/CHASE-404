@@ -9,7 +9,7 @@ const shader=fs.readFileSync(new URL('../src/renderer.js',import.meta.url),'utf8
 const countColor=(mesh,rgb)=>{let n=0;for(let i=0;i<mesh.colors.length;i+=3)if(mesh.colors[i]===rgb[0]&&mesh.colors[i+1]===rgb[1]&&mesh.colors[i+2]===rgb[2])n++;return n;};
 
 test('Fase 11.11: shader separates chrome, glass and painted surfaces on vehicle-only pass',()=>{
- assert.match(shader,/if\(uMaterialType>0\.5\)/);
+ assert.match(shader,/if\(uMaterialType>0\.5&&uMaterialType<2\.5\)/);
  assert.match(shader,/float chromeMask=/);
  assert.match(shader,/float glassMask=/);
  assert.match(shader,/float glassFresnel=/);

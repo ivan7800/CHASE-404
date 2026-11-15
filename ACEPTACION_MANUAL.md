@@ -1,4 +1,4 @@
-# CHASE 404 · v0.23.0 · Acta de aceptación manual
+# CHASE 404 · v0.24.0 · Acta de aceptación manual
 
 **Estado: PENDIENTE.** Este documento no certifica una versión final. Completarlo con fecha, sistema, navegador, resultados y evidencias reales de cada sesión.
 

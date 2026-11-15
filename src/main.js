@@ -8,7 +8,8 @@ import {shortcutAllowed} from './navigation-guard.js';
 import {createRuntimeGuard} from './runtime-guard.js';
 import {missionReport,missionFailureTitle} from './mission-report.js';
 import {objectivePresentation,objectiveTransition} from './objective-presentation.js';
-import {pursuitThreat,damageFeedback} from './threat-feedback.js';
+import {cityMapView,cityMapTarget} from './city-map.js';
+import {pursuitThreat,damageFeedback,speedWarning} from './threat-feedback.js';
 import {visibleStoryActors} from './story-actors.js';
 import {storyBeat} from './story-scenes.js';
 import {dialoguePresentation} from './dialogue-presentation.js';
@@ -26,7 +27,7 @@ import {createSuspect,stepSuspect} from './suspect.js';
 import {newMission,stepMission,missionTarget,missionDistance,missionChapter} from './mission.js';
 import {createCar,createUrbanCar,resetCar,step,FIXED_STEP,formatTime} from './physics.js';
 import {Controls} from './controls.js';
-import {CITY} from './city.js';
+import {CITY,streetProfile} from './city.js';
 import {createTraffic,stepTraffic} from './traffic.js';
 import {SIGNALS,signalState} from './signals.js';
 import {createPolice,stepPolice} from './police.js';
@@ -224,7 +225,7 @@ function refreshDiscoveryHUD(){
  const candidate=availableDiscovery(),hint=$('discoveryHint'),button=$('discoveryCollect');
  hint.hidden=!candidate;button.hidden=!candidate;
  if(candidate)hint.textContent='PISTA CERCANA · '+candidate.secret.title.toUpperCase()+' · X PARA EXAMINAR';
- $('archiveBtn').hidden=!urbanMode;$('contactJournalBtn').hidden=!explorationMode();$('contactHint').hidden=true;$('contactInteract').hidden=true;
+ $('archiveBtn').hidden=!urbanMode;$('cityMapBtn').hidden=!urbanMode;$('contactJournalBtn').hidden=!explorationMode();$('contactHint').hidden=true;$('contactInteract').hidden=true;
  const progress=discoveryProgress(sideStats);
  $('archiveBtn').title='Archivo de Barcelona · '+progress.count+'/'+progress.total+' (I)';
 }
@@ -609,6 +610,17 @@ function commitSettings(){
 
 function effects(){effectsEnabled=!effectsEnabled;renderer.setEffectsEnabled(effectsEnabled&&!effectiveReducedMotion());$('fxBtn').setAttribute('aria-pressed',String(effectsEnabled));$('fxBtn').innerHTML=effectsEnabled?'✦ <span>FX ON</span>':'✧ <span>FX OFF</span>';try{storage.setItem('chase404.effects.v6',effectsEnabled?'on':'off')}catch{}notice(effectsEnabled?'EFECTOS VISUALES ACTIVADOS':'EFECTOS VISUALES DESACTIVADOS');}
 async function sound(){try{const on=await audio.toggle();$('soundBtn').setAttribute('aria-pressed',String(on));$('soundBtn').innerHTML=on?'♫ <span>AUDIO ON</span>':'♫ <span>AUDIO OFF</span>';audio.pause(paused||helpOpen||settingsOpen||archiveOpen||contactOpen||collectionOpen||workshopOpen);}catch(e){notice(e.message.toUpperCase());}}
+let cityMapOverview=false;
+function toggleCityMap(){
+ cityMapOverview=!cityMapOverview;
+ const button=$('cityMapBtn');
+ button.textContent=cityMapOverview?'VISTA DE CALLE':'MAPA GENERAL';
+ button.setAttribute('aria-pressed',String(cityMapOverview));
+ button.setAttribute('aria-label',cityMapOverview?'Volver al mapa de calles cercanas':'Ver mapa general de Barcelona');
+ $('minimap').setAttribute('aria-label',cityMapOverview?'Mapa general de Barcelona':'Minimapa de calles cercanas');
+ drawMap();
+}
+
 const ctx=ui.minimap.getContext('2d');
 function drawNavigation(target,actor,loc){
  const now=performance.now();
@@ -640,7 +652,20 @@ function drawHeading(actor,loc){
 
 function drawMap(){
  const c=ui.minimap,w=c.width,h=c.height,pad=20;
- if(urbanMode){ctx.clearRect(0,0,w,h);ctx.fillStyle='#243c3a';ctx.fillRect(0,0,w,h);const pts=CITY.streets.flat(),xs=pts.map(p=>p[0]),zs=pts.map(p=>p[1]),minX=Math.min(...xs)-28,maxX=Math.max(...xs)+28,minZ=Math.min(...zs)-28,maxZ=Math.max(...zs)+28,scale=Math.min((w-pad*2)/(maxX-minX),(h-pad*2)/(maxZ-minZ)),loc=p=>[w/2+(p[0]-(minX+maxX)/2)*scale,h/2+(p[1]-(minZ+maxZ)/2)*scale];ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#d5c3a2';ctx.lineWidth=6;for(const road of CITY.streets){ctx.beginPath();road.forEach((p,i)=>i?ctx.lineTo(...loc(p)):ctx.moveTo(...loc(p)));ctx.stroke();}ctx.fillStyle='#e6d19c';ctx.font='bold 10px monospace';ctx.fillText('BARCELONA · 1984',7,13);ctx.fillStyle='#84ebd1';ctx.fillRect(...loc([WORKSHOP.x,WORKSHOP.z]).map(n=>n-3),6,6);ctx.fillStyle='#e9b97b';ctx.fillRect(...loc([CARMEL_GARAGE.x,CARMEL_GARAGE.z]).map(n=>n-4),8,8);
+ if(urbanMode){
+  const actor=pedestrian.active?pedestrian:car;
+  const {locate:loc,scale}=cityMapView(w,h,actor,cityMapOverview);
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle='#243c3a';ctx.fillRect(0,0,w,h);
+  ctx.lineCap='round';ctx.lineJoin='round';
+  for(const [index,road] of CITY.streets.entries()){
+   const width=cityMapOverview?4:Math.max(4,streetProfile(index).roadHalf*scale*2);
+   ctx.beginPath();road.forEach((p,i)=>i?ctx.lineTo(...loc(p)):ctx.moveTo(...loc(p)));
+   ctx.strokeStyle='#171f21';ctx.lineWidth=width+2;ctx.stroke();
+   ctx.strokeStyle='#aaa28b';ctx.lineWidth=width;ctx.stroke();
+  }
+  ctx.fillStyle='#84ebd1';ctx.fillRect(...loc([WORKSHOP.x,WORKSHOP.z]).map(n=>n-3),6,6);
+  ctx.fillStyle='#e9b97b';ctx.fillRect(...loc([CARMEL_GARAGE.x,CARMEL_GARAGE.z]).map(n=>n-4),8,8);
  // Personajes fijos (verde) y pruebas activas (ámbar): puntos geográficos ficticios.
  if(explorationMode())for(const job of STREET_JOBS){
   const [x,y]=loc([job.start.x,job.start.z]);
@@ -651,9 +676,25 @@ function drawMap(){
   if(stage==='active'){const [ex,ey]=loc([npc.location.x,npc.location.z]);ctx.fillStyle='#ffb86f';ctx.beginPath();ctx.arc(ex,ey,5,0,Math.PI*2);ctx.fill();ctx.stroke();}
  }
  const found=new Set(cleanDiscoveries(sideStats.discoveries));
- for(const spot of DISCOVERIES){const [sx,sy]=loc([spot.x,spot.z]);ctx.fillStyle=found.has(spot.id)?'#608a80':'#f4cd73';ctx.strokeStyle='#17282f';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(sx,sy,found.has(spot.id)?2.5:4.1,0,Math.PI*2);ctx.fill();ctx.stroke();}const target=explorationMode()?(streetJob?.job.stops[streetJob.index]??null):sideMode()?sideTarget(sideRun):missionTarget(mission);const actor=pedestrian.active?pedestrian:car;
+ for(const spot of DISCOVERIES){const [sx,sy]=loc([spot.x,spot.z]);ctx.fillStyle=found.has(spot.id)?'#608a80':'#f4cd73';ctx.strokeStyle='#17282f';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(sx,sy,found.has(spot.id)?2.5:4.1,0,Math.PI*2);ctx.fill();ctx.stroke();}const target=explorationMode()?(streetJob?.job.stops[streetJob.index]??null):sideMode()?sideTarget(sideRun):missionTarget(mission);
  drawNavigation(target?.kind==='tail'&&suspect.active?suspect:target,actor,loc);
- if(target?.kind==='branch'){for(const option of target.alternatives){ctx.fillStyle='#ff8060';ctx.strokeStyle='#fff0c5';ctx.lineWidth=2;ctx.beginPath();ctx.arc(...loc([option.x,option.z]),6,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#fff0bc';ctx.font='bold 9px system-ui';ctx.fillText(option===target.alternatives[0]?'A':'B',loc([option.x,option.z])[0]+8,loc([option.x,option.z])[1]+3);}}else if(target){ctx.fillStyle='#ff8060';ctx.strokeStyle='#fff0c5';ctx.lineWidth=2;ctx.beginPath();ctx.arc(...loc(target.kind==='tail'&&suspect.active?[suspect.x,suspect.z]:[target.x,target.z]),6,0,Math.PI*2);ctx.fill();ctx.stroke();}drawHeading(actor,loc);return;}
+ const showDestination=(position,label)=>{
+  const pin=cityMapTarget(loc([position.x,position.z]),w,h);
+  ctx.fillStyle='#ff8060';ctx.strokeStyle='#fff0c5';ctx.lineWidth=2;ctx.beginPath();
+  if(pin.outside){
+   ctx.save();ctx.translate(pin.x,pin.y);ctx.rotate(pin.angle);
+   ctx.moveTo(8,0);ctx.lineTo(-5,5);ctx.lineTo(-5,-5);ctx.closePath();ctx.restore();
+  }else ctx.arc(pin.x,pin.y,6,0,Math.PI*2);
+  ctx.fill();ctx.stroke();
+  if(label){
+   ctx.fillStyle='#fff0bc';ctx.font='bold 11px system-ui';
+   ctx.fillText(label,pin.x+8,pin.y+3);
+  }
+ };
+ if(target?.kind==='branch'){
+  for(const [i,option] of target.alternatives.entries())showDestination(option,i===0?'A':'B');
+ }else if(target)showDestination(target.kind==='tail'&&suspect.active?suspect:target);
+ drawHeading(actor,loc);return;}
  const ps=Array.from({length:200},(_,i)=>sample(LENGTH*i/200));
  const minX=Math.min(...ps.map(p=>p.x)),maxX=Math.max(...ps.map(p=>p.x));
  const minZ=Math.min(...ps.map(p=>p.z)),maxZ=Math.max(...ps.map(p=>p.z));
@@ -668,11 +709,11 @@ function drawMap(){
  ctx.fillStyle='#cbd6df';ctx.font='bold 11px monospace';ctx.fillText('START / FINISH',6,17);
 }
 function updateSelectionUI(){
- const track=getTrack(),spec=getCar($('carSelect').value),index=TRACKS.findIndex(t=>t.id===track.id)+1;$('app').dataset.world=urbanMode?'urban':'track';applyLighting();updateSideMenu();$('vehicleHealthRow').hidden=!urbanMode;$('workshopBtn').hidden=!urbanMode;$('workshopHint').hidden=true;$('collectionBtn').hidden=!urbanMode;$('collectionHint').hidden=true;$('archiveBtn').hidden=!urbanMode;$('touchVehicle').hidden=!urbanMode;document.querySelector('.touch-actions').hidden=!urbanMode;$('discoveryHint').hidden=true;$('discoveryCollect').hidden=true;
+ const track=getTrack(),spec=getCar($('carSelect').value),index=TRACKS.findIndex(t=>t.id===track.id)+1;$('app').dataset.world=urbanMode?'urban':'track';applyLighting();updateSideMenu();$('vehicleHealthRow').hidden=!urbanMode;$('workshopBtn').hidden=!urbanMode;$('workshopHint').hidden=true;$('collectionBtn').hidden=!urbanMode;$('collectionHint').hidden=true;$('archiveBtn').hidden=!urbanMode;$('cityMapBtn').hidden=!urbanMode;$('touchVehicle').hidden=!urbanMode;document.querySelector('.touch-actions').hidden=!urbanMode;$('discoveryHint').hidden=true;$('discoveryCollect').hidden=true;
  $('carType').textContent=spec.type;$('carDescription').textContent=spec.tag;
  const stats=[['POTENCIA','power'],['PUNTA','topSpeed'],['AGARRE','grip'],['DIRECCIÓN','steer']];$('carStats').replaceChildren();
  for(const [label,key] of stats){const row=document.createElement('label');row.className='garage-stat';const span=document.createElement('span');span.textContent=label;const meter=document.createElement('meter');meter.min=.75;meter.max=1.3;meter.value=spec.tune[key];meter.setAttribute('aria-label',label);row.append(span,meter);$('carStats').append(row);}
- if(urbanMode){$('headerTrack').textContent='EL CARMEL · BARCELONA';$('trackIndex').innerHTML='1984<span>/BCN</span>';$('trackName').textContent='EL CARMEL';$('trackKind').textContent='LADERA · TURÓ DE LA ROVIRA';$('trackDescription').textContent='EL CARMEL · BARCELONA · 1984';$('modeDescription').textContent='Recorre las calles de ladera del Carmel';$('modeTag').textContent='▰ EL CARMEL · BARCELONA · 1984';$('modeHUD').textContent='GAEL VERENNE · LA CINTA DEL TURÓ';$('metricCars').textContent='01';$('metricLaps').textContent='∞';$('metricAI').textContent='MISIÓN';$('modeSelect').value='free';$('modeSelect').disabled=true;$('clockHeading').textContent=freeExploration?'TIEMPO EXPLORANDO':'TIEMPO RESTANTE';$('recordLines').hidden=true;$('raceScore').hidden=true;$('raceTimerPanel').hidden=true;$('raceGapPanel').hidden=true;$('leaderboard').hidden=true;$('lapDataRow').hidden=true;$('sectorDataRow').hidden=true;$('minimap').setAttribute('aria-label','Minimapa del Carmel, Barcelona, 1984');$('cupStatus').hidden=true;$('newCupBtn').hidden=true;$('trackSelect').disabled=false;$('carSelect').disabled=false;$('scene').setAttribute('aria-label','Conducción 3D por El Carmel, Barcelona, 1984');updateCampaignUI();return;}
+ if(urbanMode){$('headerTrack').textContent='EL CARMEL · BARCELONA';$('trackIndex').innerHTML='1984<span>/BCN</span>';$('trackName').textContent='EL CARMEL';$('trackKind').textContent='LADERA · TURÓ DE LA ROVIRA';$('trackDescription').textContent='EL CARMEL · BARCELONA · 1984';$('modeDescription').textContent='Recorre las calles de ladera del Carmel';$('modeTag').textContent='▰ EL CARMEL · BARCELONA · 1984';$('modeHUD').textContent='GAEL VERENNE · LA CINTA DEL TURÓ';$('metricCars').textContent='01';$('metricLaps').textContent='∞';$('metricAI').textContent='MISIÓN';$('modeSelect').value='free';$('modeSelect').disabled=true;$('clockHeading').textContent=freeExploration?'TIEMPO EXPLORANDO':'TIEMPO RESTANTE';$('recordLines').hidden=true;$('raceScore').hidden=true;$('raceTimerPanel').hidden=true;$('raceGapPanel').hidden=true;$('leaderboard').hidden=true;$('lapDataRow').hidden=true;$('sectorDataRow').hidden=true;$('minimap').setAttribute('aria-label',cityMapOverview?'Mapa general de Barcelona':'Minimapa de calles cercanas');$('cupStatus').hidden=true;$('newCupBtn').hidden=true;$('trackSelect').disabled=false;$('carSelect').disabled=false;$('scene').setAttribute('aria-label','Conducción 3D por El Carmel, Barcelona, 1984');updateCampaignUI();return;}
  $('modeSelect').disabled=false;$('clockHeading').textContent='TIEMPO DE VUELTA';$('recordLines').hidden=false;$('raceScore').hidden=false;$('raceTimerPanel').hidden=false;$('raceGapPanel').hidden=false;$('leaderboard').hidden=false;$('lapDataRow').hidden=false;$('sectorDataRow').hidden=false;$('minimap').setAttribute('aria-label','Minimapa del circuito');
  $('headerTrack').textContent=track.name;
  $('trackIndex').innerHTML=String(index).padStart(2,'0')+'<span>/03</span>';
@@ -746,7 +787,7 @@ function renderHUD(){refreshDiscoveryHUD();refreshContactHUD();
  $('touchSprint').setAttribute('aria-label',walking?'Correr':'Freno de mano');
  }
  const listener=walking?pedestrian:car;const district=soundDistrictAt(listener.x,listener.z,urbanMode);$('districtLabel').textContent=urbanMode?SOUND_DISTRICTS[district]+' · 1984':'ARCADE · 1984';ui.speed.textContent=pedestrian.active?'PIE':String(car.kmh).padStart(3,'0');ui.fill.style.width=(Math.min(100,car.kmh/((car.urban?35:73)*car.tune.topSpeed*3.6)*100)).toFixed(1)+'%';ui.gear.textContent=car.speed<-.3?'R':car.kmh<2?'N':Math.min(5,Math.floor(car.kmh/50)+1);ui.clock.textContent=urbanMode?formatTime(explorationMode()?urbanElapsed:sideMode()?sideRun.remaining:mission.remaining):formatTime(car.lapTime);ui.lap.textContent=String(car.lap).padStart(2,'0');ui.best.textContent=formatTime(savedBest??car.best);ui.last.textContent=formatTime(car.lastLap);ui.sector.textContent=String(car.gate+1).padStart(2,'0')+' / 04';ui.surface.textContent=car.wall?'BARRERA':car.offroad?'GRAVA':slipstream(race,car)>.4?'REBUFO':'ASFALTO';ui.surface.style.color=car.offroad||car.wall?'#ffc181':'#fff';ui.fps.textContent=renderer.fps?renderer.fps+' FPS':'-- FPS';ui.model.textContent=(renderer.modelSource==='GLB'?'GLB · ':'3D · ')+getCar(urbanMode?car.vehicleId:$('carSelect').value).name;ui.model.title=renderer.modelError||'Modelo local sin dependencias de red';
- updateObjectivePresentation();if(urbanMode){$('workshopHint').hidden=!workshopAvailable();$('collectionHint').hidden=!collectionAvailable();const condition=damageCondition(car);$('vehicleHealth').textContent=condition.health+'%';$('vehicleHealth').style.color=condition.health<35?'#ff897e':condition.health<70?'#ffd18a':'#b6efc5';const damageCue=damageFeedback(car);const threatCue=pursuitThreat([police,...ambushPatrols],pedestrian.active?pedestrian:car);const warning=$('dangerIndicator');warning.hidden=damageCue.level==='good'&&threatCue.level==='none';warning.dataset.level=threatCue.level==='critical'||damageCue.level==='critical'?'critical':threatCue.level==='high'||damageCue.level==='high'?'high':'info';warning.textContent=threatCue.level!=='none'?threatCue.label+(damageCue.level!=='good'?' · '+damageCue.health+'% MOTOR':''):damageCue.label;const target=explorationMode()?(streetJob?.job.stops[streetJob.index]??null):sideMode()?sideTarget(sideRun):missionTarget(mission);$('missionHUD').hidden=false;$('missionObjective').title=pedestrian.active?'A PIE · E para subir al coche más cercano':'E para salir del coche cuando esté detenido';$('missionHUD').querySelector('strong').textContent=explorationMode()?'EXPLORACIÓN · BARCELONA 1984':sideMode()?selectedActivity().title:missionChapter(selectedChapter).title;$('missionObjective').textContent=explorationMode()?'ENCARGOS AZULES · ACÉRCATE DESPACIO Y PULSA U · PISTAS X':target?`${sideMode()?sideRun.index+1:mission.index+1}/${sideMode()?selectedActivity().points.length:missionChapter(selectedChapter).points.length} · ${sideMode()?'Control: '+target.name:target.text}${['stakeout','tail','evade','contact','rescue','investigate','extract','decision','precision-drive'].includes(target.kind)?' ('+Math.floor(mission.holdProgress)+'/'+target.hold+' s)':''}`:(sideMode()?sideRun.phase:mission.phase)==='won'?'OBJETIVO COMPLETADO':(sideMode()?sideRun.phase:mission.phase)==='lost'?'OBJETIVO FALLIDO':'Preparando misión';$('missionDistance').textContent=explorationMode()?discoveryProgress(sideStats).count+' / '+DISCOVERIES.length+' PISTAS':target?(target.kind==='tail'?Math.round(Math.hypot((pedestrian.active?pedestrian:car).x-suspect.x,(pedestrian.active?pedestrian:car).z-suspect.z)):sideMode()?Math.round(Math.hypot((pedestrian.active?pedestrian:car).x-target.x,(pedestrian.active?pedestrian:car).z-target.z)):missionDistance(mission,pedestrian.active?pedestrian:car))+' m'+(police.active?' · POLICÍA EN PERSECUCIÓN':police.heat>0?' · ALERTA':''):'--';}else $('missionHUD').hidden=true;
+ updateObjectivePresentation();if(urbanMode){$('workshopHint').hidden=!workshopAvailable();$('collectionHint').hidden=!collectionAvailable();const condition=damageCondition(car);$('vehicleHealth').textContent=condition.health+'%';$('vehicleHealth').style.color=condition.health<35?'#ff897e':condition.health<70?'#ffd18a':'#b6efc5';const damageCue=damageFeedback(car);const threatCue=pursuitThreat([police,...ambushPatrols],pedestrian.active?pedestrian:car);const warning=$('dangerIndicator');const alert=threatCue.level==='none'?speedWarning(police.heat):null;warning.hidden=damageCue.level==='good'&&threatCue.level==='none'&&!alert;warning.dataset.level=threatCue.level==='critical'||damageCue.level==='critical'?'critical':threatCue.level==='high'||damageCue.level==='high'?'high':'info';warning.textContent=threatCue.level!=='none'?threatCue.label+(damageCue.level!=='good'?' · '+damageCue.health+'% MOTOR':''):alert?.label??damageCue.label;const target=explorationMode()?(streetJob?.job.stops[streetJob.index]??null):sideMode()?sideTarget(sideRun):missionTarget(mission);$('missionHUD').hidden=false;$('missionObjective').title=pedestrian.active?'A PIE · E para subir al coche más cercano':'E para salir del coche cuando esté detenido';$('missionHUD').querySelector('strong').textContent=explorationMode()?'EXPLORACIÓN · BARCELONA 1984':sideMode()?selectedActivity().title:missionChapter(selectedChapter).title;$('missionObjective').textContent=explorationMode()?'ENCARGOS AZULES · ACÉRCATE DESPACIO Y PULSA U · PISTAS X':target?`${sideMode()?sideRun.index+1:mission.index+1}/${sideMode()?selectedActivity().points.length:missionChapter(selectedChapter).points.length} · ${sideMode()?'Control: '+target.name:target.text}${['stakeout','tail','evade','contact','rescue','investigate','extract','decision','precision-drive'].includes(target.kind)?' ('+Math.floor(mission.holdProgress)+'/'+target.hold+' s)':''}`:(sideMode()?sideRun.phase:mission.phase)==='won'?'OBJETIVO COMPLETADO':(sideMode()?sideRun.phase:mission.phase)==='lost'?'OBJETIVO FALLIDO':'Preparando misión';$('missionDistance').textContent=explorationMode()?discoveryProgress(sideStats).count+' / '+DISCOVERIES.length+' PISTAS':target?(target.kind==='tail'?Math.round(Math.hypot((pedestrian.active?pedestrian:car).x-suspect.x,(pedestrian.active?pedestrian:car).z-suspect.z)):sideMode()?Math.round(Math.hypot((pedestrian.active?pedestrian:car).x-target.x,(pedestrian.active?pedestrian:car).z-target.z)):missionDistance(mission,pedestrian.active?pedestrian:car))+' m'+(police.active?' · POLICÍA EN PERSECUCIÓN':police.heat>0?' · ALERTA':''):'--';}else $('missionHUD').hidden=true;
  drawStreetJobHUD();
  ui.position.textContent=String(race.position).padStart(2,'0');ui.positionTotal.textContent=String(race.rivals.length+1).padStart(2,'0');
  ui.raceLap.textContent=String(Math.min(Number.isFinite(race.laps)?race.laps:99,car.lap)).padStart(2,'0');ui.raceLaps.textContent=Number.isFinite(race.laps)?String(race.laps).padStart(2,'0'):'∞';
@@ -777,6 +818,7 @@ function toggleVehicle(){
 function attachTouch(id,key){const el=$(id);el.addEventListener('pointerdown',e=>{e.preventDefault();try{el.setPointerCapture(e.pointerId);}catch{}controls.pointerDown(e.pointerId,key);syncControls();});for(const ev of ['pointerup','pointercancel','lostpointercapture'])el.addEventListener(ev,e=>{controls.pointerUp(e.pointerId);syncControls();});}
 function bindEvents(){
  $('streetJobBtn').addEventListener('click',offerStreetJob);
+ $('cityMapBtn').addEventListener('click',()=>{toggleCityMap();$('scene').focus({preventScroll:true});});
  $('newCampaignBtn').addEventListener('click',newCampaign);
  $('storyContinue').addEventListener('click',closeStoryBeat);
  $('contactJournalBtn').addEventListener('click',contactJournal);$('contactInteract').addEventListener('click',contactInteract);$('contactClose').addEventListener('click',closeContactPanel);$('contactContinue').addEventListener('click',closeContactPanel);
@@ -881,7 +923,7 @@ function frameTick(now){requestAnimationFrame(frame);pollGamepad();if(!last)last
   const listener=pedestrian.active?pedestrian:car;
   const trafficDistance=urbanMode?nearestEntityDistance(streetTraffic,listener.x,listener.z):Infinity;
   const patrolDistance=urbanMode?Math.min(nearestEntityDistance([police],listener.x,listener.z,{police:true}),nearestEntityDistance(ambushPatrols,listener.x,listener.z,{police:true})):Infinity;
-  audio.update(settingsOpen?0:car.speed,car,{urban:urbanMode,x:listener.x,z:listener.z,onFoot:pedestrian.active,policeActive:police.active||ambushPatrols.some(p=>p.active),policeDistance:patrolDistance,trafficDistance,lighting:lightingMode});
+  audio.update(settingsOpen?0:car.speed,car,{urban:urbanMode,x:listener.x,z:listener.z,onFoot:pedestrian.active,policeActive:police.active||ambushPatrols.some(p=>p.active),policeSearching:(!police.active||police.searching)&&ambushPatrols.every(p=>!p.active||p.searching),policeDistance:patrolDistance,trafficDistance,lighting:lightingMode});
  }
  updateScreenEffects(car,delta);if(++frames%4===0)renderHUD();
 }

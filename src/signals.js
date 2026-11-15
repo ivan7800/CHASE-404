@@ -1,7 +1,8 @@
 /** Deterministic district junction priority signals; no wall clock dependency. */
-import {CITY,nearestStreet,streetProfile} from './city.js';
+import {CITY,cityStartPose,nearestStreet,streetProfile} from './city.js';
 import {cityBuildingAt} from './urban-buildings.js';
 const PERIOD=22;
+const startView=cityStartPose();
 export const SIGNALS=Object.freeze(CITY.streets.slice(0,6).map((road,id)=>({id,x:road[Math.floor(road.length/2)][0],z:road[Math.floor(road.length/2)][1],offset:id*5.5})));
 // The trigger stays on the lane. Only the visible pole moves to the curb.
 export const SIGNAL_POLES=Object.freeze(SIGNALS.map(signal=>{
@@ -15,6 +16,7 @@ export const SIGNAL_POLES=Object.freeze(SIGNALS.map(signal=>{
    if(setback>=length)continue;
    const offset=side*(roadHalf+sidewalkHalf)/2;
    const x=end[0]-tx*setback+tz*offset,z=end[1]-tz*setback-tx*offset;
+   if(Math.hypot(x-startView.x,z-startView.z)<16)continue;
    const nearest=nearestStreet(x,z);
    if(nearest.distance<nearest.roadHalf+.4||nearest.distance>nearest.sidewalkHalf||cityBuildingAt(x,z,.7))continue;
    return Object.freeze({x,z,yaw:Math.atan2(-tx,-tz)});

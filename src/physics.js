@@ -29,7 +29,12 @@ export function step(car,input,dt){
  car.steer+=(turn-car.steer)*Math.min(1,dt*response);
  const velocityFactor=v/(v+12);
  const sensitivity=[.75,1,1.25].includes(input.steeringSensitivity)?input.steeringSensitivity:1;
- const steerPower=(1.45-.20*Math.min(1,v/70))*velocityFactor*(tune.steer||1)*condition.steering*sensitivity;
+ // City intersections need a tighter turning radius at parking and street speeds.
+ // Above 90 km/h the steering gain fades so a tap does not snap the car sideways.
+ const steeringGain=car.urban
+  ?v/(v+5)*(1.97-.78*Math.min(1,v/26))
+  :(1.45-.20*Math.min(1,v/70))*velocityFactor;
+ const steerPower=steeringGain*(tune.steer||1)*condition.steering*sensitivity;
  const drift=input.handbrake&&v>5;
  car.yaw+=car.steer*steerPower*Math.sign(car.speed||1)*(drift?1.15:1)*dt;
  if(drift)car.speed*=Math.max(0,1-2.6*dt/Math.max(v,1));

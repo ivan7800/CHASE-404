@@ -1,3 +1,10 @@
+## v0.24.0 — Calles y persecución
+
+- Nuevo paseo pavimentado y arbolado en la salida del Carmel. Se despeja la cámara inicial y se distingue mejor la entrada al taller. Cielo con degradado y detalle cercano de materiales.
+- Los giros urbanos a baja velocidad cierran antes y los vehículos en contacto ya no empujan al jugador a través de una fachada.
+- El minimapa sigue al jugador y marca la dirección de los objetivos alejados. El botón de mapa general recupera la vista de toda la ciudad.
+- Aviso gradual por exceso de velocidad, apariciones de la patrulla más separadas y búsqueda desde la última posición vista. La sirena se amortigua durante la búsqueda y una esquina bloquea la detención.
+
 ## v0.23.0 — A pie de calle
 
 - Reconstruidos los cruces, el pavimento y las marcas viales. Acera, terreno y fachadas reciben la iluminación según su orientación.
