@@ -1,4 +1,4 @@
-import {nearestStreet} from '../src/city.js';
+import {cityStartPose,nearestStreet} from '../src/city.js';
 import {cityBuildingAt} from '../src/urban-buildings.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,4 +18,9 @@ test('visible traffic signals stand on sidewalks and face their approach',()=>{
   assert.equal(cityBuildingAt(pole.x,pole.z,.7),null);
   assert.ok(Number.isFinite(pole.yaw));
  }
+});
+
+test('starting camera has clearance from street signal poles',()=>{
+ const start=cityStartPose();
+ for(const pole of SIGNAL_POLES)assert.ok(Math.hypot(pole.x-start.x,pole.z-start.z)>=16);
 });

@@ -297,3 +297,10 @@
 @media(min-width:741px){
  .app[data-world="urban"] .header-actions button{padding-inline:7px;letter-spacing:.35px;font-size:9px}
 }
+
+.city-map-btn{
+ display:block;width:100%;margin-top:8px;padding:5px 7px;border-radius:4px;
+ color:#ffdfa0;font-size:9px;font-weight:800;letter-spacing:.5px;
+}
+.city-map-btn[aria-pressed="true"]{background:#59432a}
+@media(max-width:740px){.city-map-btn{font-size:8px;padding:5px}}

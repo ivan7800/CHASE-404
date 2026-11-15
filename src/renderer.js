@@ -17,8 +17,8 @@ import {DEFAULT_LIGHTING,getLighting,normalizeLighting} from './atmosphere.js';
 import {makeCameraRig,resetCameraRig,queueCameraImpact,advanceCameraRig} from './camera-rig.js';
 import {rivalDrawPlan,renderResolution} from './performance.js';
 const VS=`attribute vec3 aPos; attribute vec3 aNormal; attribute vec3 aColor;
-uniform mat4 uMVP; uniform mat4 uModel; varying vec3 vColor; varying vec3 vNormal; varying vec3 vWorldPosition; varying float vDistance;
-void main(){vec4 clip=uMVP*vec4(aPos,1.0);gl_Position=clip;vDistance=clamp(clip.w,0.0,2200.0);vColor=aColor;vNormal=mat3(uModel)*aNormal;vWorldPosition=(uModel*vec4(aPos,1.0)).xyz;}`;
+uniform mat4 uMVP; uniform mat4 uModel; uniform mediump float uMaterialType; varying vec3 vColor; varying vec3 vNormal; varying vec3 vWorldPosition; varying float vDistance;
+void main(){vec4 clip=uMVP*vec4(aPos,1.0);gl_Position=uMaterialType>3.5?vec4(aPos.xy,.9999,1.0):clip;vDistance=clamp(clip.w,0.0,2200.0);vColor=aColor;vNormal=mat3(uModel)*aNormal;vWorldPosition=(uModel*vec4(aPos,1.0)).xyz;}`;
 const FS=`precision mediump float;
 varying vec3 vColor;varying vec3 vNormal;varying vec3 vWorldPosition;varying float vDistance;
 uniform vec3 uSky;uniform vec3 uSun;uniform vec3 uSunDirection;
@@ -27,6 +27,13 @@ uniform float uExposure;uniform float uSunPower;
 uniform float uFogStart;uniform float uFogEnd;uniform float uFogStrength;uniform float uWarmth;uniform float uLamps;
 uniform float uMaterialType;uniform vec3 uCameraPos;
 void main(){
+ if(uMaterialType>3.5){
+   float upper=smoothstep(-.44,.95,vWorldPosition.y);
+   vec3 zenith=uSky*vec3(.67,.81,1.02);
+   vec3 horizon=uSky+vec3(.055,.029,.008)*uWarmth*2.0;
+   gl_FragColor=vec4(mix(horizon,zenith,upper),1.0);
+   return;
+ }
  vec3 N=normalize(vNormal);
  float sunlight=max(dot(N,normalize(uSunDirection)),0.0);
  float hemi=clamp(N.y*.5+.5,0.0,1.0);
@@ -38,7 +45,7 @@ void main(){
  col+=vec3(.12,.045,.006)*max(N.y,0.0)*uWarmth;
  // Material 1 = vehicle paint/glass, 2 = rubber/chrome wheel. Keep the environment matte.
  // A broad clearcoat highlight catches late sun on GLB and procedural cars alike.
- if(uMaterialType>0.5){
+ if(uMaterialType>0.5&&uMaterialType<2.5){
    vec3 V=normalize(uCameraPos-vWorldPosition);
    vec3 H=normalize(V+normalize(uSunDirection));
    float ndoth=max(dot(N,H),0.0);
@@ -61,6 +68,16 @@ void main(){
    // Chrome reflects sky and sun more sharply than paint; never affects rubber.
    col=mix(col,col*.64+skyReflection*.52+uSun*pow(ndoth,74.0)*.66*uSunPower,chromeMask*.82);
    col+=uSun*(gloss*specularPower+rim*.042)*uSunPower*uExposure;
+ }
+ // Matter catches light at different scales. World-space grain stays on
+ // the masonry and pavement, and fades before it becomes distant shimmer.
+ if(uMaterialType>2.5){
+   float detail=1.0-smoothstep(34.0,96.0,vDistance);
+   if(detail>.02){
+     vec3 grid=floor(vWorldPosition*6.0);
+     float grain=fract(dot(mod(grid,32.0),vec3(.7549,.2857,.5511)))-.5;
+     col*=1.0+grain*detail*.045;
+   }
  }
  // Low-pressure street lamps and warm-lit windows are identified using the
  // exact authored vertex palette, avoiding a separate texture or light pass.
@@ -96,7 +113,10 @@ export class Renderer{
   this.program=prog;this.boundMesh=null;this.drawCalls=0;
   this.attrs=['aPos','aNormal','aColor'].map(x=>gl.getAttribLocation(prog,x));
   this.mvp=gl.getUniformLocation(prog,'uMVP');this.model=gl.getUniformLocation(prog,'uModel');this.sky=gl.getUniformLocation(prog,'uSky');this.exposure=gl.getUniformLocation(prog,'uExposure');this.sun=gl.getUniformLocation(prog,'uSun');this.sunDirection=gl.getUniformLocation(prog,'uSunDirection');this.ambientLow=gl.getUniformLocation(prog,'uAmbientLow');this.ambientHigh=gl.getUniformLocation(prog,'uAmbientHigh');this.sunPower=gl.getUniformLocation(prog,'uSunPower');this.fogStart=gl.getUniformLocation(prog,'uFogStart');this.fogEnd=gl.getUniformLocation(prog,'uFogEnd');this.fogStrength=gl.getUniformLocation(prog,'uFogStrength');this.warmth=gl.getUniformLocation(prog,'uWarmth');this.lamps=gl.getUniformLocation(prog,'uLamps');this.materialType=gl.getUniformLocation(prog,'uMaterialType');this.cameraPos=gl.getUniformLocation(prog,'uCameraPos');
-  this.track=this.upload(buildTrack());this.city=this.upload(buildCity());this.urban=false;this.vehicle=getCar('racer');this.car=this.upload(buildCar(this.vehicle));this.imported=null;this.vehicleMeshes=new Map();this.vehicleLoads=new Map();
+  this.track=this.upload(buildTrack());this.city=this.upload(buildCity());
+  const skyMesh=new Builder();
+  skyMesh.quad([-1,-1,0],[1,-1,0],[1,1,0],[-1,1,0],[0,0,0]);
+  this.skyMesh=this.upload(skyMesh.finish());this.urban=false;this.vehicle=getCar('racer');this.car=this.upload(buildCar(this.vehicle));this.imported=null;this.vehicleMeshes=new Map();this.vehicleLoads=new Map();
   // Distinctive low-poly protagonist, split into independently articulated pieces.
   const gael=buildGaelMeshes();
   this.gaelSmoothedPose=null;
@@ -263,7 +283,13 @@ export class Renderer{
   gl.uniform1f(this.sunPower,look.sunPower);gl.uniform1f(this.exposure,look.exposure);
   gl.uniform1f(this.fogStart,look.fogStart);gl.uniform1f(this.fogEnd,look.fogEnd);
   gl.uniform1f(this.fogStrength,look.fogStrength);gl.uniform1f(this.warmth,look.warmth);gl.uniform1f(this.lamps,look.lamps);gl.uniform3f(this.cameraPos,this.cam.x,this.cam.y,this.cam.z);
-  this.draw(this.urban?this.city:this.track,transform(),vp);
+  const origin=transform();
+  if(this.urban){
+   gl.disable(gl.DEPTH_TEST);
+   this.draw(this.skyMesh,origin,vp,4);
+   gl.enable(gl.DEPTH_TEST);
+   this.draw(this.city,origin,vp,3);
+  }else this.draw(this.track,origin,vp);
   if(this.urban){
    for(const [i,actor] of this.contactActors.entries()){
     const {x,y,z}=actor.position;

@@ -45,7 +45,7 @@ export class EngineAudio {
   for(const base of [630,795]){
    const osc=ctx.createOscillator(),gain=ctx.createGain(),filter=ctx.createBiquadFilter();
    osc.type='triangle';osc.frequency.value=base;filter.type='lowpass';filter.frequency.value=980;gain.gain.value=0;
-   osc.connect(filter).connect(gain).connect(this.master);osc.start();this.siren.push({osc,gain,base});
+   osc.connect(filter).connect(gain).connect(this.master);osc.start();this.siren.push({osc,gain,filter,base});
   }
  }
  pause(muted){this.muted=Boolean(muted);if(!this.ctx||!this.master)return;
@@ -66,6 +66,7 @@ export class EngineAudio {
   const sweep=Math.sin(t*Math.PI*1.5);
   for(const [i,s] of this.siren.entries()){
    s.osc.frequency.setTargetAtTime(s.base+(i===0?1:-1)*sweep*90,t,.07);
+   s.filter.frequency.setTargetAtTime(world.policeSearching?560:1180,t,.2);
    s.gain.gain.setTargetAtTime(f.siren*(i===0?.58:.42),t,.19);
   }
  }
