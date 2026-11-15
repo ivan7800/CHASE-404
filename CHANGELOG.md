@@ -1,3 +1,9 @@
+## v0.25.0 — Transiciones del Carmel
+
+- Señales de curva tras el taller. El arcén frena el movimiento hacia fuera de la calle y marca el borde sin simular un choque ni dañar el coche. Las fachadas conservan su colisión.
+- El casete se recoge despacio o a pie. Si un diálogo empieza mientras conduces deprisa o la policía te persigue, aparece como mensaje de misión y puedes seguir conduciendo.
+- Una detención en exploración permite volver al Carmel con una acción explícita. Reiniciar y cerrar escenas evita arrastrar el acelerador o la pausa anterior.
+
 ## v0.24.0 — Calles y persecución
 
 - Nuevo paseo pavimentado y arbolado en la salida del Carmel. Se despeja la cámara inicial y se distingue mejor la entrada al taller. Cielo con degradado y detalle cercano de materiales.
