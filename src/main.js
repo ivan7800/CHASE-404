@@ -433,11 +433,11 @@ function closeStoryBeat(){
  audio.pause(paused);if(storyFocus?.isConnected)storyFocus.focus();else $('pauseBtn').focus();storyFocus=null;
 }
 function clearControls(){controls.clear();syncControls();}
-function setPaused(value){paused=value;audio.pause(paused);ui.overlay.hidden=!paused;if(paused){clearControls();if(started){ui.introTitle.innerHTML=urbanMode?'EL CARMEL<br><em>EN PAUSA.</em>':'CARRERA<br><em>EN PAUSA.</em>';ui.start.innerHTML='CONTINUAR <span>↗</span>';}}$('pauseBtn').innerHTML=paused?'▶ <span>SEGUIR</span>':'Ⅱ <span>PAUSA</span>';}
+function setPaused(value){paused=value;audio.pause(paused);ui.overlay.hidden=!paused;if(paused){clearControls();if(started){ui.introTitle.innerHTML=urbanMode?'EL CARMEL<br><em>EN PAUSA.</em>':'CARRERA<br><em>EN PAUSA.</em>';ui.start.innerHTML='CONTINUAR <span>↗</span>';ui.start.focus({preventScroll:true});}}$('pauseBtn').innerHTML=paused?'▶ <span>SEGUIR</span>':'Ⅱ <span>PAUSA</span>';}
 function unpause(){
  if(mode==='championship'&&!profile.cup){beginCup(profile,$('carSelect').value);syncCupSelection();reset();updateProfileUI();savedBest=readRecord();}
  if(!started){recordStart(profile);storageSave();}
- started=true;hideHelp();setPaused(false);activateUrbanRun({urbanMode,sideMode:sideMode(),explorationMode:explorationMode(),mission,sideRun,damageEvents:car.damageEvents});updateCampaignUI();audio.cue('start');notice(explorationMode()?'EXPLORACIÓN LIBRE · BUSCA LAS PLACAS DORADAS':sideMode()?('DESAFÍO · '+selectedActivity().title):urbanMode?('GAEL VERENNE · '+missionChapter(selectedChapter).title):mode==='free'?'FREE RUN · SIN LÍMITE':'GREEN LIGHT · GO!');
+ started=true;hideHelp();setPaused(false);$('scene').focus({preventScroll:true});activateUrbanRun({urbanMode,sideMode:sideMode(),explorationMode:explorationMode(),mission,sideRun,damageEvents:car.damageEvents});updateCampaignUI();audio.cue('start');notice(explorationMode()?'EXPLORACIÓN LIBRE · BUSCA LAS PLACAS DORADAS':sideMode()?('DESAFÍO · '+selectedActivity().title):urbanMode?('GAEL VERENNE · '+missionChapter(selectedChapter).title):mode==='free'?'FREE RUN · SIN LÍMITE':'GREEN LIGHT · GO!');
 }
 function showHelp(){if(helpOpen||storyOpen||contactOpen||archiveOpen||workshopOpen||collectionOpen||settingsOpen)return;helpOpen=true;clearControls();ui.help.hidden=false;audio.pause(true);}
 function hideHelp(){ui.help.hidden=true;helpOpen=false;audio.pause(paused);}

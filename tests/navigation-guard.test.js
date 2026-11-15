@@ -17,3 +17,9 @@ test('normal gameplay and pause key remain usable',()=>{
  for(const code of ['KeyE','KeyW','KeyR','KeyC','Escape'])assert.equal(shortcutAllowed(code,{started:true}),true,code);
  assert.equal(shortcutAllowed('KeyE',{started:false,paused:true}),false);
 });
+
+test('pause and escape remain available after a toolbar button takes focus',()=>{
+ for(const code of ['Escape','KeyP'])for(const paused of [true,false]){
+  assert.equal(shortcutAllowed(code,{started:true,paused,focusedControl:true}),true);
+ }
+});

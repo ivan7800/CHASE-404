@@ -1,3 +1,10 @@
+## v0.23.0 — A pie de calle
+
+- Reconstruidos los cruces, el pavimento y las marcas viales. Acera, terreno y fachadas reciben la iluminación según su orientación.
+- Fachadas del Carmel con portales, toldos, contraventanas y galerías. Se retiran escaparates y antenas sueltos y se asienta la silueta del fondo sobre el terreno.
+- Gràcia combina calles estrechas, tres nuevos edificios con colisión y una placeta conectada a la acera. El Guinardó gana un paseo y vegetación que enmarca la salida de la calle.
+- Los semáforos visibles pasan de la calzada a la acera. La barra urbana mantiene sus controles al alcance y deja más limpia la vista. P y Escape permiten volver al juego después de pausar con el ratón.
+
 ## v0.22.0 — Calles en movimiento
 
 - Peatones animados en aceras y tráfico repartido por los barrios.

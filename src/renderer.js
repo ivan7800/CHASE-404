@@ -12,7 +12,7 @@ import {contactPose} from './contact-animation.js';
 import {buildGaelMeshes,GAEL_RIG,gaelGaitPose,blendGaelPose} from './gael-model.js';
 import {STORY_ACTORS,storyActorPose} from './story-actors.js';
 import {cityElevation} from './city.js';
-import {SIGNALS,signalState} from './signals.js';
+import {SIGNALS,SIGNAL_POLES,signalState} from './signals.js';
 import {DEFAULT_LIGHTING,getLighting,normalizeLighting} from './atmosphere.js';
 import {makeCameraRig,resetCameraRig,queueCameraImpact,advanceCameraRig} from './camera-rig.js';
 import {rivalDrawPlan,renderResolution} from './performance.js';
@@ -302,7 +302,12 @@ export class Renderer{
    this.draw(pieces.head,multiply(base,multiply(transform(0,2.6,0),spinX(pose.head))),vp);
    for(const side of [-1,1])this.draw(pieces.arm,multiply(base,multiply(transform(side*.62,2.24,0),spinX(side<0?pose.leftArm:pose.rightArm))),vp);
   }
-  if(this.urban)for(const signal of SIGNALS){if((signal.x-car.x)**2+(signal.z-car.z)**2>950*950)continue;const phase=signalState(signal,this.urbanTime||0);this.draw(this.signalMeshes[phase],transform(signal.x+3,cityElevation(signal.x+3,signal.z)+.2,signal.z+3),vp);}
+  if(this.urban)for(const signal of SIGNALS){
+   const pole=SIGNAL_POLES[signal.id];
+   if(!pole||(pole.x-car.x)**2+(pole.z-car.z)**2>950*950)continue;
+   const phase=signalState(signal,this.urbanTime||0);
+   this.draw(this.signalMeshes[phase],transform(pole.x,cityElevation(pole.x,pole.z)+.4,pole.z,pole.yaw),vp);
+  }
   if(mode!==2){
    this.draw(this.shadow,transform(car.x,carY+.042,car.z,car.yaw),vp);
    const slopeAhead=this.urban?cityElevation(car.x+f[0]*2.4,car.z+f[1]*2.4):carY,slopeBack=this.urban?cityElevation(car.x-f[0]*2.4,car.z-f[1]*2.4):carY;
