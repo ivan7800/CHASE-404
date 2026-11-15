@@ -142,6 +142,21 @@ function buildHillside(g){
  }
 }
 
+// The first bend enters the hillside. Boards face the approach from the workshop.
+function buildCarmelBendSigns(g){
+ for(const [x,z] of [[115,142],[121,139]]){
+  const y=cityElevation(x,z);
+  g.cylinder(x,y,z,.09,3,6,[77,79,76]);
+  g.box(x,y+2.55,z,.16,1.12,2.55,[38,45,48]);
+  const point=(dz,dy)=>[x-.085,y+2.55+dy,z+dz];
+  for(const center of [-.52,.52]){
+   const light=[244,225,167];
+   g.quad(point(center-.39,0),point(center-.09,0),point(center+.48,.42),point(center+.27,.42),light);
+   g.quad(point(center-.39,0),point(center+.27,-.42),point(center+.48,-.42),point(center-.09,0),light);
+  }
+ }
+}
+
 export function buildStreetSurfaces(g){
  const asphalt=[54,57,59],sidewalk=[157,150,133],curb=[202,187,157],paint=[217,203,175];
  const nodes=new Map();
@@ -1432,7 +1447,7 @@ function buildDistrictCorridors019(g){
 }
 
 export function buildCity(){
- const g=new Builder();buildHillside(g);buildStreetSurfaces(g);buildRoadFinishes(g);buildHousing(g);buildNeighborhoodDetails(g);buildCarmelWorkshop(g);buildVerenneGarage(g);buildPeriodStreetscape(g);buildViewpoint(g);buildGuinardoGateway(g);buildGraciaGateway(g);buildGraciaRow(g);buildStreetSpaces(g);buildCarmelPromenade(g);buildEixampleGateway(g);buildPortGateway(g);buildMontjuicGateway(g);buildFacadeFinishes(g);buildCarmelGraciaArtPass(g);buildStreetArt113(g);buildAmbient114(g);buildArchitecturalPass117(g);buildFacadeMaterials118(g);buildRooftopSilhouettes1119(g);buildCarmelPanorama1120(g);buildDistrictIdentity1121(g);buildStreetLevelArt1122(g);buildCarmelVisualPass1123(g);buildDistrictCorridors019(g);buildStreetDetails119(g);buildSecretMarkers(g);buildContactFigures(g);return g.finish();
+ const g=new Builder();buildHillside(g);buildStreetSurfaces(g);buildCarmelBendSigns(g);buildRoadFinishes(g);buildHousing(g);buildNeighborhoodDetails(g);buildCarmelWorkshop(g);buildVerenneGarage(g);buildPeriodStreetscape(g);buildViewpoint(g);buildGuinardoGateway(g);buildGraciaGateway(g);buildGraciaRow(g);buildStreetSpaces(g);buildCarmelPromenade(g);buildEixampleGateway(g);buildPortGateway(g);buildMontjuicGateway(g);buildFacadeFinishes(g);buildCarmelGraciaArtPass(g);buildStreetArt113(g);buildAmbient114(g);buildArchitecturalPass117(g);buildFacadeMaterials118(g);buildRooftopSilhouettes1119(g);buildCarmelPanorama1120(g);buildDistrictIdentity1121(g);buildStreetLevelArt1122(g);buildCarmelVisualPass1123(g);buildDistrictCorridors019(g);buildStreetDetails119(g);buildSecretMarkers(g);buildContactFigures(g);return g.finish();
 }
 
 // Capture the structural boxes through the same authored builders that draw

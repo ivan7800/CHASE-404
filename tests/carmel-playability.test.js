@@ -76,3 +76,35 @@ test('standard pad ignores stick drift and maps triggers, controls on foot and p
   assert.equal(state.actions.pause,true);
   assert.equal(readGamepad([{...pad,connected:false}]),null);
 });
+
+test('holding throttle from the Carmel spawn reaches the marked bend without a phantom impact', () => {
+  const car=createUrbanCar();
+  let reachedEdge=false;
+  for(let i=0;i<750;i++){
+    step(car,{throttle:true},FIXED_STEP);
+    const road=nearestStreet(car.x,car.z);
+    assert.ok(road.distance<=road.sidewalkHalf+2+1e-6);
+    assert.equal(car.barrierContact,false);
+    reachedEdge||=car.atStreetEdge;
+  }
+  assert.ok(reachedEdge);
+  assert.ok(car.x>116&&car.x<123);
+  const x=car.x;
+  for(let i=0;i<190;i++)step(car,{brake:true},FIXED_STEP);
+  assert.ok(car.x<x-4,'the player can reverse away from the shoulder');
+});
+
+test('the workshop checkpoint waits until the player slows down', () => {
+  const mission=newMission(1),car=createUrbanCar();
+  startMission(mission);
+  while(car.x<103){
+    step(car,{throttle:true},FIXED_STEP);
+    assert.equal(stepMission(mission,car,FIXED_STEP),null);
+  }
+  assert.ok(car.kmh>85);
+  assert.equal(mission.index,0);
+  assert.equal(stepMission(mission,{...car,kmh:4},FIXED_STEP),null);
+  assert.equal(stepMission(mission,{...car,kmh:3},FIXED_STEP),'checkpoint');
+  assert.equal(mission.index,1);
+  assert.equal(stepMission(mission,{...car,kmh:0},FIXED_STEP),null);
+});

@@ -1,6 +1,6 @@
 /** CHASE 404 · opening mission. Deterministic progression; independent of rendering. */
 export const MISSION_POINTS=Object.freeze([
- Object.freeze({x:106,z:132,name:'TALLER DE GAEL',text:'Recoge el casete que dejó Pau en el taller.'}),
+ Object.freeze({x:106,z:132,name:'TALLER DE GAEL',text:'Frena junto al taller (3 km/h o menos) o acércate a pie para recoger el casete.',maxKmh:3}),
  Object.freeze({x:232,z:96,name:'CALLE ALTA',text:'Sube hasta el enlace de la calle Alta.'}),
  Object.freeze({x:240,z:-58,name:'CONTACTO DEL TURÓ',text:'Entrega el casete al recadero del Turó.'})
 ]);
@@ -167,6 +167,10 @@ export function stepMission(m,position,dt){
  }
 
  if(target&&Math.hypot(position.x-target.x,position.z-target.z)<=16){
+  if(target.maxKmh!==undefined&&!position.onFoot&&(position.kmh??0)>target.maxKmh){
+   if(m.remaining<=0){m.phase='lost';return 'lost';}
+   return null;
+  }
   if(target.kind==='stakeout'){
    const parked=!position.onFoot&&Number.isFinite(position.kmh)&&position.kmh<=3;
    m.holdProgress=parked?Math.min(target.hold,m.holdProgress+dt):0;

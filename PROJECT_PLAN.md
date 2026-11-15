@@ -1,10 +1,10 @@
 # CHASE 404 — Plan vigente
 
-**Versión:** 0.24.0 ALPHA · **Destino:** [GitHub Pages](https://ivan7800.github.io/CHASE-404/) · **Código:** [ivan7800/CHASE-404](https://github.com/ivan7800/CHASE-404)
+**Versión:** 0.25.0 ALPHA · **Destino:** [GitHub Pages](https://ivan7800.github.io/CHASE-404/) · **Código:** [ivan7800/CHASE-404](https://github.com/ivan7800/CHASE-404)
 
 ## Fase actual: arquitectura y lectura de la ciudad
 
-Cruces y pavimentos, fachadas delanteras y traseras, silueta asentada en el terreno y espacios públicos en Gràcia y Guinardó. Los ejes de calle se conservan y la geometría nueva de los tres edificios de Gràcia tiene colisión. El juego sigue en ALPHA. Consulta [QA v0.24.0](QA_v0.24.0.md).
+Cruces y pavimentos, fachadas delanteras y traseras, silueta asentada en el terreno y espacios públicos en Gràcia y Guinardó. Los ejes de calle se conservan y la geometría nueva de los tres edificios de Gràcia tiene colisión. El juego sigue en ALPHA. Consulta [QA v0.25.0](QA_v0.25.0.md).
 
 ## Alcance de 0.21.0
 

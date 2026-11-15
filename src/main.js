@@ -311,6 +311,7 @@ function pollGamepad(){
  if(justPressed('pause')&&ui.finish.hidden){togglePause();return;}
  if(justPressed('confirm')){
   if(storyOpen){closeStoryBeat();return;}
+  if(!ui.finish.hidden&&explorationMode()){restartRace();return;}
   if(ui.finish.hidden&&paused&&!ui.overlay.hidden&&!helpOpen&&!settingsOpen){unpause();return;}
  }
  if(paused||helpOpen||settingsOpen||storyOpen||!started)return;
@@ -424,6 +425,12 @@ function updateProfileUI(){
 
 function showStoryBeat(beat){
  if(!beat||storyOpen||!started||paused)return false;
+ if((!pedestrian.active&&car.kmh>3)||police.active||ambushPatrols.some(patrol=>patrol.active)){
+  const radio=$('storyRadio');
+  radio.textContent=beat.speaker+' · '+beat.text;
+  radio.hidden=false;
+  return false;
+ }
  storyOpen=true;storyFocus=document.activeElement;clearControls();audio.pause(true);
  $('storySpeaker').textContent=beat.speaker;$('storyPlace').textContent=beat.place;
  $('storyTitle').textContent=beat.title;$('storyText').textContent=beat.text;
@@ -431,7 +438,7 @@ function showStoryBeat(beat){
 }
 function closeStoryBeat(){
  if(!storyOpen)return;storyOpen=false;$('storyOverlay').hidden=true;acc=0;
- audio.pause(paused);if(storyFocus?.isConnected)storyFocus.focus();else $('pauseBtn').focus();storyFocus=null;
+ audio.pause(paused);if(storyFocus?.isConnected)storyFocus.focus();else $('scene').focus({preventScroll:true});storyFocus=null;
 }
 function clearControls(){controls.clear();syncControls();}
 function setPaused(value){paused=value;audio.pause(paused);ui.overlay.hidden=!paused;if(paused){clearControls();if(started){ui.introTitle.innerHTML=urbanMode?'EL CARMEL<br><em>EN PAUSA.</em>':'CARRERA<br><em>EN PAUSA.</em>';ui.start.innerHTML='CONTINUAR <span>↗</span>';ui.start.focus({preventScroll:true});}}$('pauseBtn').innerHTML=paused?'▶ <span>SEGUIR</span>':'Ⅱ <span>PAUSA</span>';}
@@ -444,7 +451,7 @@ function showHelp(){if(helpOpen||storyOpen||contactOpen||archiveOpen||workshopOp
 function hideHelp(){ui.help.hidden=true;helpOpen=false;audio.pause(paused);}
 function togglePause(){if(!ui.finish.hidden)return;if(storyOpen){closeStoryBeat();return;}if(contactOpen){closeContactPanel();return;}if(archiveOpen){closeArchive();return;}if(collectionOpen){closeCollection();return;}if(workshopOpen){closeWorkshop();return;}if(settingsOpen){closeSettings();return;}if(helpOpen){hideHelp();return;}if(!started){unpause();return;}if(paused)unpause();else setPaused(true);}
 function reset(){
- closeStoryBeat();clearObjectivePresentation();initRace();renderer.startCam=true;renderer.effects?.clear();ui.finish.hidden=true;
+ closeStoryBeat();clearControls();acc=0;$('storyRadio').hidden=true;clearObjectivePresentation();initRace();renderer.startCam=true;renderer.effects?.clear();ui.finish.hidden=true;
  if(started&&!paused)activateUrbanRun({urbanMode,sideMode:sideMode(),explorationMode:explorationMode(),mission,sideRun,damageEvents:car.damageEvents});
  if(paused&&started)ui.overlay.hidden=false;
  notice(explorationMode()?'EXPLORACIÓN REINICIADA':sideMode()?'DESAFÍO REINICIADO · '+selectedActivity().title:urbanMode?'MISIÓN REINICIADA · '+missionChapter(selectedChapter).title:'CARRERA REINICIADA · NUEVA PARRILLA');
@@ -746,6 +753,27 @@ function renderMissionReport(won){
  for(const [name,value] of entries){const row=document.createElement('div');row.className='finish-row';const label=document.createElement('span');label.textContent=name;const strong=document.createElement('b');strong.textContent=value;row.append(label,strong);ui.finishBoard.append(row);}
  const message=document.createElement('p');message.className='mission-report-summary';message.textContent=report.summary;ui.finishBoard.append(message);
 }
+function showExplorationCapture(){
+ clearControls();
+ acc=0;
+ paused=true;
+ started=false;
+ audio.pause(true);
+ ui.overlay.hidden=true;
+ ui.finish.hidden=false;
+ ui.finishTitle.textContent='LA PATRULLA TE HA DETENIDO';
+ ui.finishPosition.textContent='EXPLORACIÓN LIBRE';
+ ui.finishTime.textContent=formatTime(urbanElapsed);
+ ui.finishBoard.replaceChildren();
+ $('finishSelection').textContent='BARCELONA · 1984';
+ $('rewardReport').textContent='Al continuar volverás al punto de salida del Carmel. Las recompensas guardadas se conservan.';
+ $('nextCupBtn').hidden=true;
+ $('backToGarageBtn').textContent='VOLVER A PORTADA ↗';
+ const restart=$('restartRaceBtn');
+ restart.hidden=false;
+ restart.textContent='VOLVER AL CARMEL ↗';
+ restart.focus();
+}
 function missionEnd(won,{captured=false}={}){
  clearObjectivePresentation();
  if(won){
@@ -786,7 +814,7 @@ function renderHUD(){refreshDiscoveryHUD();refreshContactHUD();
  $('touchBrake').setAttribute('aria-label',walking?'Retroceder':'Frenar o dar marcha atrás');
  $('touchSprint').setAttribute('aria-label',walking?'Correr':'Freno de mano');
  }
- const listener=walking?pedestrian:car;const district=soundDistrictAt(listener.x,listener.z,urbanMode);$('districtLabel').textContent=urbanMode?SOUND_DISTRICTS[district]+' · 1984':'ARCADE · 1984';ui.speed.textContent=pedestrian.active?'PIE':String(car.kmh).padStart(3,'0');ui.fill.style.width=(Math.min(100,car.kmh/((car.urban?35:73)*car.tune.topSpeed*3.6)*100)).toFixed(1)+'%';ui.gear.textContent=car.speed<-.3?'R':car.kmh<2?'N':Math.min(5,Math.floor(car.kmh/50)+1);ui.clock.textContent=urbanMode?formatTime(explorationMode()?urbanElapsed:sideMode()?sideRun.remaining:mission.remaining):formatTime(car.lapTime);ui.lap.textContent=String(car.lap).padStart(2,'0');ui.best.textContent=formatTime(savedBest??car.best);ui.last.textContent=formatTime(car.lastLap);ui.sector.textContent=String(car.gate+1).padStart(2,'0')+' / 04';ui.surface.textContent=car.wall?'BARRERA':car.offroad?'GRAVA':slipstream(race,car)>.4?'REBUFO':'ASFALTO';ui.surface.style.color=car.offroad||car.wall?'#ffc181':'#fff';ui.fps.textContent=renderer.fps?renderer.fps+' FPS':'-- FPS';ui.model.textContent=(renderer.modelSource==='GLB'?'GLB · ':'3D · ')+getCar(urbanMode?car.vehicleId:$('carSelect').value).name;ui.model.title=renderer.modelError||'Modelo local sin dependencias de red';
+ const listener=walking?pedestrian:car;const district=soundDistrictAt(listener.x,listener.z,urbanMode);$('districtLabel').textContent=urbanMode?SOUND_DISTRICTS[district]+' · 1984':'ARCADE · 1984';ui.speed.textContent=pedestrian.active?'PIE':String(car.kmh).padStart(3,'0');ui.fill.style.width=(Math.min(100,car.kmh/((car.urban?35:73)*car.tune.topSpeed*3.6)*100)).toFixed(1)+'%';ui.gear.textContent=car.speed<-.3?'R':car.kmh<2?'N':Math.min(5,Math.floor(car.kmh/50)+1);ui.clock.textContent=urbanMode?formatTime(explorationMode()?urbanElapsed:sideMode()?sideRun.remaining:mission.remaining):formatTime(car.lapTime);ui.lap.textContent=String(car.lap).padStart(2,'0');ui.best.textContent=formatTime(savedBest??car.best);ui.last.textContent=formatTime(car.lastLap);ui.sector.textContent=String(car.gate+1).padStart(2,'0')+' / 04';ui.surface.textContent=car.wall?'IMPACTO':car.atStreetEdge?'BORDE DE CALLE':car.offroad?'GRAVA':slipstream(race,car)>.4?'REBUFO':'ASFALTO';ui.surface.style.color=car.offroad||car.wall?'#ffc181':'#fff';ui.fps.textContent=renderer.fps?renderer.fps+' FPS':'-- FPS';ui.model.textContent=(renderer.modelSource==='GLB'?'GLB · ':'3D · ')+getCar(urbanMode?car.vehicleId:$('carSelect').value).name;ui.model.title=renderer.modelError||'Modelo local sin dependencias de red';
  updateObjectivePresentation();if(urbanMode){$('workshopHint').hidden=!workshopAvailable();$('collectionHint').hidden=!collectionAvailable();const condition=damageCondition(car);$('vehicleHealth').textContent=condition.health+'%';$('vehicleHealth').style.color=condition.health<35?'#ff897e':condition.health<70?'#ffd18a':'#b6efc5';const damageCue=damageFeedback(car);const threatCue=pursuitThreat([police,...ambushPatrols],pedestrian.active?pedestrian:car);const warning=$('dangerIndicator');const alert=threatCue.level==='none'?speedWarning(police.heat):null;warning.hidden=damageCue.level==='good'&&threatCue.level==='none'&&!alert;warning.dataset.level=threatCue.level==='critical'||damageCue.level==='critical'?'critical':threatCue.level==='high'||damageCue.level==='high'?'high':'info';warning.textContent=threatCue.level!=='none'?threatCue.label+(damageCue.level!=='good'?' · '+damageCue.health+'% MOTOR':''):alert?.label??damageCue.label;const target=explorationMode()?(streetJob?.job.stops[streetJob.index]??null):sideMode()?sideTarget(sideRun):missionTarget(mission);$('missionHUD').hidden=false;$('missionObjective').title=pedestrian.active?'A PIE · E para subir al coche más cercano':'E para salir del coche cuando esté detenido';$('missionHUD').querySelector('strong').textContent=explorationMode()?'EXPLORACIÓN · BARCELONA 1984':sideMode()?selectedActivity().title:missionChapter(selectedChapter).title;$('missionObjective').textContent=explorationMode()?'ENCARGOS AZULES · ACÉRCATE DESPACIO Y PULSA U · PISTAS X':target?`${sideMode()?sideRun.index+1:mission.index+1}/${sideMode()?selectedActivity().points.length:missionChapter(selectedChapter).points.length} · ${sideMode()?'Control: '+target.name:target.text}${['stakeout','tail','evade','contact','rescue','investigate','extract','decision','precision-drive'].includes(target.kind)?' ('+Math.floor(mission.holdProgress)+'/'+target.hold+' s)':''}`:(sideMode()?sideRun.phase:mission.phase)==='won'?'OBJETIVO COMPLETADO':(sideMode()?sideRun.phase:mission.phase)==='lost'?'OBJETIVO FALLIDO':'Preparando misión';$('missionDistance').textContent=explorationMode()?discoveryProgress(sideStats).count+' / '+DISCOVERIES.length+' PISTAS':target?(target.kind==='tail'?Math.round(Math.hypot((pedestrian.active?pedestrian:car).x-suspect.x,(pedestrian.active?pedestrian:car).z-suspect.z)):sideMode()?Math.round(Math.hypot((pedestrian.active?pedestrian:car).x-target.x,(pedestrian.active?pedestrian:car).z-target.z)):missionDistance(mission,pedestrian.active?pedestrian:car))+' m'+(police.active?' · POLICÍA EN PERSECUCIÓN':police.heat>0?' · ALERTA':''):'--';}else $('missionHUD').hidden=true;
  drawStreetJobHUD();
  ui.position.textContent=String(race.position).padStart(2,'0');ui.positionTotal.textContent=String(race.rivals.length+1).padStart(2,'0');
@@ -806,14 +834,22 @@ function renderHUD(){refreshDiscoveryHUD();refreshContactHUD();
  drawMap();}
 function toggleVehicle(){
  if(!urbanMode||!started||paused||helpOpen||contactOpen||archiveOpen||workshopOpen||collectionOpen||settingsOpen)return;
- if(pedestrian.active){const v=enterVehicle(pedestrian,car,streetTraffic);
-  if(v){car.tune=tuneWithUpgrades(car.vehicleId,sideStats);renderer.changeVehicle(car.vehicleId);}
-  notice(v?'GAEL · '+getCar(car.vehicleId).name+' · VEHÍCULO RECUPERADO':'ACÉRCATE A UN VEHÍCULO DETENIDO');
+ if(pedestrian.active){
+  const vehicle=enterVehicle(pedestrian,car,streetTraffic);
+  if(!vehicle){notice('ACÉRCATE A UN VEHÍCULO DETENIDO');return;}
+  car.tune=tuneWithUpgrades(car.vehicleId,sideStats);
+  renderer.changeVehicle(car.vehicleId);
+  notice('GAEL · '+getCar(car.vehicleId).name+' · VEHÍCULO RECUPERADO');
  }else{
-  notice(exitVehicle(pedestrian,car,[...streetTraffic,...(police.active?[police.agent]:[]),...ambushPatrols.filter(p=>p.active).map(p=>p.agent)])?'GAEL · A PIE · WASD SEGÚN CÁMARA · ESPACIO CORRER · C RECENTRAR · E SUBIR':Math.abs(car.speed)>.8?'DETÉN EL COCHE ANTES DE BAJAR':'SALIDA BLOQUEADA · APARCA CON ESPACIO PARA ABRIR LA PUERTA');
+  const traffic=[...streetTraffic,...(police.active?[police.agent]:[]),
+   ...ambushPatrols.filter(p=>p.active).map(p=>p.agent)];
+  if(!exitVehicle(pedestrian,car,traffic)){
+   notice(Math.abs(car.speed)>.8?'DETÉN EL COCHE ANTES DE BAJAR':'SALIDA BLOQUEADA · APARCA CON ESPACIO PARA ABRIR LA PUERTA');
+   return;
+  }
+  notice('GAEL · A PIE · WASD SEGÚN CÁMARA · ESPACIO CORRER · C RECENTRAR · E SUBIR');
  }
- if(!pedestrian.active&&Math.abs(car.speed)>.8)return;
- renderer.startCam=true;clearControls();renderHUD();
+ clearControls();renderHUD();
 }
 function attachTouch(id,key){const el=$(id);el.addEventListener('pointerdown',e=>{e.preventDefault();try{el.setPointerCapture(e.pointerId);}catch{}controls.pointerDown(e.pointerId,key);syncControls();});for(const ev of ['pointerup','pointercancel','lostpointercapture'])el.addEventListener(ev,e=>{controls.pointerUp(e.pointerId);syncControls();});}
 function bindEvents(){
@@ -847,7 +883,7 @@ function bindEvents(){
  $('restartRaceBtn').addEventListener('click',restartRace);$('backToGarageBtn').addEventListener('click',backToGarage);$('helpBtn').addEventListener('click',showHelp);$('closeHelp').addEventListener('click',hideHelp);$('closeHelpBottom').addEventListener('click',hideHelp);
  ui.help.addEventListener('click',e=>{if(e.target===ui.help)hideHelp();});
  document.addEventListener('keydown',e=>{
-  if(storyOpen){if(['Escape','Enter','Space'].includes(e.code)){e.preventDefault();closeStoryBeat();}else if(e.code==='Tab'){e.preventDefault();$('storyContinue').focus();}return;}
+  if(storyOpen){if(['Escape','Enter','Space'].includes(e.code)){e.preventDefault();if(!e.repeat)closeStoryBeat();}else if(e.code==='Tab'){e.preventDefault();$('storyContinue').focus();}return;}
   if(contactOpen){if(e.code==='Escape'||e.code==='KeyN'||e.code==='KeyJ'){e.preventDefault();closeContactPanel();return;}
    if(e.code==='Tab'){const focusables=[...$('contactOverlay').querySelectorAll('button:not(:disabled)')];const first=focusables[0],last=focusables.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}
    return;}
@@ -873,7 +909,7 @@ function bindEvents(){
   if(!shortcutAllowed(code,{paused,helpOpen,started,focusedControl:Boolean(e.target?.closest?.('button,[role=button]'))}))return;
   const action=actionForKey(code,keymap);
   if(action||['KeyC','KeyR','KeyP','Escape','KeyM','KeyH','KeyG','KeyF','KeyO','KeyE','KeyT','KeyY','KeyI','KeyX','KeyN','KeyJ','KeyB','KeyU'].includes(code))e.preventDefault();
-  if(action){if(!paused&&!helpOpen){controls.keyDown(code);syncControls();}return;}
+  if(action){if(!paused&&!helpOpen&&!e.repeat){controls.keyDown(code);syncControls();}return;}
   if(e.repeat)return;
   if(code==='KeyU')offerStreetJob();else if(code==='KeyN')contactInteract();else if(code==='KeyJ')contactJournal();else if(code==='KeyE')toggleVehicle();else if(code==='KeyX')collectNearbyDiscovery();else if(code==='KeyI')showArchive();else if(code==='KeyT')showWorkshop();else if(code==='KeyY')showCollection();else if(code==='KeyO')showSettings();else if(code==='Escape'||code==='KeyP')togglePause();else if(code==='KeyR')reset();else if(code==='KeyC')camera();else if(code==='KeyG')quality();else if(code==='KeyM')sound();else if(code==='KeyF')effects();else if(code==='KeyB')cycleLighting();else if(code==='KeyH')helpOpen?hideHelp():showHelp();
  });
@@ -908,7 +944,7 @@ function frameTick(now){requestAnimationFrame(frame);pollGamepad();if(!last)last
  }
  const targetPose=pedestrian.active?{x:pedestrian.x,z:pedestrian.z,kmh:0}:car;
  for(const p of ambushPatrols)if(p.active)stepPolice(p,FIXED_STEP,targetPose);
- const contact=pedestrian.active?{contacts:0,impact:0}:stepUrbanContacts(car,police.active?[...streetTraffic,police.agent,...ambushPatrols.filter(p=>p.active).map(p=>p.agent)]:[...streetTraffic,...ambushPatrols.filter(p=>p.active).map(p=>p.agent)],FIXED_STEP);if(contact.contacts){audio.cue('collision');const severity=applyImpact(car,contact.impact,'vehicle');if(severity>0)cinematicImpact(Math.min(1,.24+severity/24));if(severity>0&&car.damageEvents%2===1)notice('IMPACTO · ESTADO DEL VEHÍCULO '+damageCondition(car).health+'%');}else if(!pedestrian.active&&car.barrierContact&&speedBefore>8){const severity=applyImpact(car,speedBefore,'barrier');if(severity>0)cinematicImpact(Math.min(1,.2+severity/24));if(severity>0&&car.damageEvents%2===1)notice('GOLPE EN BARRERA · REVISAR VEHÍCULO');}tickDamage(car,FIXED_STEP);if(!prevPursuit&&police.active){notice('POLICÍA · EXCESO DE VELOCIDAD · GANA DISTANCIA');audio.cue('pursuit');}if(police.escaped){police.escaped=false;audio.cue('escape');notice('HAS PERDIDO A LA PATRULLA');}if(police.captured||ambushPatrols.some(p=>p.captured)){if(explorationMode()){reset();notice('LA POLICÍA TE HA DEVUELTO AL CARMEL · PUEDES SEGUIR EXPLORANDO');break;}if(sideMode()){sideRun.phase='lost';sideEnd('lost','DETENIDO POR LA POLICÍA');break;}missionEnd(false,{captured:true});break;}const missionPos=pedestrian.active?{...car,x:pedestrian.x,z:pedestrian.z,kmh:0,onFoot:true}:car;missionPos.suspectDistance=suspect.active?Math.hypot(missionPos.x-suspect.x,missionPos.z-suspect.z):Infinity;missionPos.patrolDistance=Math.min(nearestEntityDistance([police],missionPos.x,missionPos.z,{police:true}),nearestEntityDistance(ambushPatrols,missionPos.x,missionPos.z,{police:true}));const completedBefore=mission.index;const state=explorationMode()?'active':sideMode()?stepSideRun(sideRun,missionPos,FIXED_STEP):stepMission(mission,missionPos,FIXED_STEP);if(sideMode()&&(state==='won'||state==='lost')){sideEnd(state);break;}if(state==='checkpoint'){{const next=sideMode()?sideTarget(sideRun):missionTarget(mission);notice(objectiveTransition(next,sideMode()));updateObjectivePresentation();}if(!sideMode()&&!explorationMode()&&showStoryBeat(storyBeat(selectedChapter,completedBefore,mission.finalChoice))){acc=0;break;}}if(state==='won'||state==='lost'){missionEnd(state==='won');break;}}if(!urbanMode&&result.contact&&!previousRaceContact)cinematicImpact(.42);if(result.contact&&race.collisions>0&&car.hitCooldown>.4&&frames%120===0)notice('¡CONTACTO CON OTRO COCHE!');if(car.wall&&frames%90===0)audio.cue('collision');if(!pedestrian.active)renderer.emitDrivingEffects?.(car,FIXED_STEP,inputs.handbrake);if(car.completed!==previous){audio.cue('lap');if(car.best!==null&&(savedBest===null||car.best<savedBest)){savedBest=car.best;saveRecord(savedBest);audio.cue('record');notice('¡NUEVO RÉCORD! '+formatTime(savedBest));}else notice('VUELTA COMPLETADA '+formatTime(car.lastLap));}acc-=FIXED_STEP;ticks++;if(result.finished){finishRace();break;}}if(ticks===12)acc=Math.min(acc,FIXED_STEP*3);}else acc=0;
+ const contact=pedestrian.active?{contacts:0,impact:0}:stepUrbanContacts(car,police.active?[...streetTraffic,police.agent,...ambushPatrols.filter(p=>p.active).map(p=>p.agent)]:[...streetTraffic,...ambushPatrols.filter(p=>p.active).map(p=>p.agent)],FIXED_STEP);if(contact.contacts){audio.cue('collision');const severity=applyImpact(car,contact.impact,'vehicle');if(severity>0)cinematicImpact(Math.min(1,.24+severity/24));if(severity>0&&car.damageEvents%2===1)notice('IMPACTO · ESTADO DEL VEHÍCULO '+damageCondition(car).health+'%');}else if(!pedestrian.active&&car.barrierContact&&speedBefore>8){const severity=applyImpact(car,speedBefore,'barrier');if(severity>0)cinematicImpact(Math.min(1,.2+severity/24));if(severity>0&&car.damageEvents%2===1)notice('GOLPE EN BARRERA · REVISAR VEHÍCULO');}tickDamage(car,FIXED_STEP);if(!prevPursuit&&police.active){notice('POLICÍA · EXCESO DE VELOCIDAD · GANA DISTANCIA');audio.cue('pursuit');}if(police.escaped){police.escaped=false;audio.cue('escape');notice('HAS PERDIDO A LA PATRULLA');}if(police.captured||ambushPatrols.some(p=>p.captured)){if(explorationMode()){showExplorationCapture();break;}if(sideMode()){sideRun.phase='lost';sideEnd('lost','DETENIDO POR LA POLICÍA');break;}missionEnd(false,{captured:true});break;}const missionPos=pedestrian.active?{...car,x:pedestrian.x,z:pedestrian.z,kmh:0,onFoot:true}:car;missionPos.suspectDistance=suspect.active?Math.hypot(missionPos.x-suspect.x,missionPos.z-suspect.z):Infinity;missionPos.patrolDistance=Math.min(nearestEntityDistance([police],missionPos.x,missionPos.z,{police:true}),nearestEntityDistance(ambushPatrols,missionPos.x,missionPos.z,{police:true}));const completedBefore=mission.index;const state=explorationMode()?'active':sideMode()?stepSideRun(sideRun,missionPos,FIXED_STEP):stepMission(mission,missionPos,FIXED_STEP);if(sideMode()&&(state==='won'||state==='lost')){sideEnd(state);break;}if(state==='checkpoint'){$('storyRadio').hidden=true;{const next=sideMode()?sideTarget(sideRun):missionTarget(mission);notice(objectiveTransition(next,sideMode()));updateObjectivePresentation();}if(!sideMode()&&!explorationMode()&&showStoryBeat(storyBeat(selectedChapter,completedBefore,mission.finalChoice))){acc=0;break;}}if(state==='won'||state==='lost'){missionEnd(state==='won');break;}}if(!urbanMode&&result.contact&&!previousRaceContact)cinematicImpact(.42);if(result.contact&&race.collisions>0&&car.hitCooldown>.4&&frames%120===0)notice('¡CONTACTO CON OTRO COCHE!');if(car.wall&&frames%90===0)audio.cue('collision');if(!pedestrian.active)renderer.emitDrivingEffects?.(car,FIXED_STEP,inputs.handbrake);if(car.completed!==previous){audio.cue('lap');if(car.best!==null&&(savedBest===null||car.best<savedBest)){savedBest=car.best;saveRecord(savedBest);audio.cue('record');notice('¡NUEVO RÉCORD! '+formatTime(savedBest));}else notice('VUELTA COMPLETADA '+formatTime(car.lastLap));}acc-=FIXED_STEP;ticks++;if(result.finished){finishRace();break;}}if(ticks===12)acc=Math.min(acc,FIXED_STEP*3);}else acc=0;
  if(settings.quality==='auto'&&renderer.fps&&frames%30===0){
   const scale=automaticQuality.observe(renderer.fps,Math.max(.01,(now-(frame.lastAutoAt||now))/1000),!paused&&!settingsOpen&&!helpOpen);
   frame.lastAutoAt=now;

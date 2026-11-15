@@ -1,6 +1,6 @@
 # CHASE 404 — Barcelona 1984
 
-**Versión 0.24.0 ALPHA · Calles y persecución.** Nuevo paseo en la salida del Carmel, conducción más ágil al tomar giros cerrados, minimapa de proximidad con vista general y patrullas que buscan desde el último contacto visual. El modo libre incluye encargos, peatones y búsqueda policial. [Diseño de campaña](CAMPAÑA.md).
+**Versión 0.25.0 ALPHA · Transiciones del Carmel.** La primera curva está señalizada, el arcén no daña el coche y la recogida del casete requiere frenar. Una detención en exploración muestra cómo volver al Carmel. Nuevo paseo en la salida del Carmel, conducción más ágil al tomar giros cerrados, minimapa de proximidad con vista general y patrullas que buscan desde el último contacto visual. El modo libre incluye encargos, peatones y búsqueda policial. [Diseño de campaña](CAMPAÑA.md).
 
 Videojuego original de conducción arcade ambientado en una Barcelona ficticia y condensada de 1984. Incluye 15 misiones principales, dos desenlaces, tres encargos secundarios, exploración libre, seis modelos de coches, taller, garaje, secretos y personajes con historias secundarias. Se ejecuta en el navegador con WebGL y archivos locales; no requiere cuenta, servidor remoto ni servicios externos.
 
@@ -44,7 +44,7 @@ Los ajustes y avances se almacenan en `localStorage` del navegador. Borrar datos
 
 ## Verificación y estado
 
-Consulta [QA v0.24.0](QA_v0.24.0.md) para la validación de esta versión. El botón `MAPA GENERAL` permite cambiar entre mapa de barrio y mapa completo.
+Consulta [QA v0.25.0](QA_v0.25.0.md) para la validación de esta versión. El botón `MAPA GENERAL` permite cambiar entre mapa de barrio y mapa completo.
 
 Consulta [QA_v0.20.0.md](QA_v0.20.0.md) para la validación de esta versión. La geometría y los nuevos corredores urbanos se documentan en [QA_v0.19.0.md](QA_v0.19.0.md). La muestra anterior del Carmel está en [QA_v0.18.0.md](QA_v0.18.0.md). La fase anterior se documenta en [QA_v0.17.0.md](QA_v0.17.0.md). Las colisiones y el remate urbano anterior se describen en [QA_v0.16.0.md](QA_v0.16.0.md).
 

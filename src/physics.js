@@ -70,18 +70,39 @@ export function step(car,input,dt){
    if(normal<0){car.vx-=normal*nx;car.vz-=normal*nz;}
    car.vx*=.78;car.vz*=.78;car.speed*=.55;
   }
-  const street=nearestStreet(car.x,car.z);car.offset=street.distance;
-  car.offroad=street.distance>street.roadHalf;car.cityWallTime=Math.max(0,(car.cityWallTime||0)-dt);
-  let barrierContact=Boolean(building.hit);
-  if(car.offroad){car.speed*=1-.9*dt;car.vx*=1-.65*dt;car.vz*=1-.65*dt;}
+  const street=nearestStreet(car.x,car.z);
+  car.offset=street.distance;
+  car.offroad=street.distance>street.roadHalf;
+  car.cityWallTime=Math.max(0,(car.cityWallTime||0)-dt);
   const maxDistance=street.sidewalkHalf+2;
-  if(street.distance>maxDistance){
+  car.atStreetEdge=false;
+  // The unpaved shoulder slows outward motion. Keep the tangential component
+  // so a driver can steer along the edge or back onto the carriageway.
+  if(car.offroad){
    const nx=(car.x-street.x)/street.distance,nz=(car.z-street.z)/street.distance;
-   car.x=street.x+nx*maxDistance;car.z=street.z+nz*maxDistance;
-   const outward=car.vx*nx+car.vz*nz;
-   if(outward>0){car.vx-=nx*outward;car.vz-=nz*outward;}
-   car.speed*=.72;barrierContact=true;
+   const outward=Math.max(0,car.vx*nx+car.vz*nz);
+   const shoulder=Math.min(1,(street.distance-street.roadHalf)/(maxDistance-street.roadHalf));
+   if(outward>0){
+    const resistance=1-Math.exp(-shoulder*10*dt);
+    const removed=street.distance>=maxDistance?outward:outward*resistance;
+    car.vx-=nx*removed;car.vz-=nz*removed;
+    const forward=Math.sin(car.yaw)*nx+Math.cos(car.yaw)*nz;
+    const cap=Math.max(0,Math.abs(car.speed)-removed*Math.abs(forward));
+    car.speed=Math.sign(car.speed)*cap;
+   }
+   car.speed*=Math.exp(-.9*dt);
+   car.vx*=Math.exp(-.65*dt);car.vz*=Math.exp(-.65*dt);
+   if(street.distance>maxDistance){
+    // Constrain the position through the same building sweep, never through
+    // a building at a junction. This boundary is not a physical impact.
+    const edge=resolveCityBuildingMove(previousX,previousZ,street.x+nx*maxDistance,
+     street.z+nz*maxDistance,{radius:1.65,along:[-2.25,0,2.25],yaw:car.yaw});
+    car.x=edge.x;car.z=edge.z;
+    car.offset=nearestStreet(car.x,car.z).distance;
+    car.atStreetEdge=true;
+   }
   }
+  const barrierContact=Boolean(building.hit);
   car.barrierContact=barrierContact;
   if(barrierContact)car.cityWallTime=.18;
   car.wall=car.cityWallTime>0;
